@@ -1,0 +1,115 @@
+/* ==========================================================
+ * ไฟล์: assets/css/custom.css
+ * คำอธิบาย: สไตล์เสริมความสวยงาม Glassmorphism, ธีมเขียวธรรมชาติ IT วิ่งเข้าป่ามัน
+ * ========================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --primary: #059669;
+    --primary-hover: #047857;
+    --secondary: #84CC16;
+    --dark-bg: #0A1813;
+}
+
+body {
+    font-family: 'Kanit', 'Plus Jakarta Sans', sans-serif;
+    letter-spacing: -0.01em;
+}
+
+/* Glassmorphism Classes */
+.glass-card {
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+}
+
+.glass-nav {
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+/* Herbal & Forest Nature Gradient Backgrounds */
+.hero-gradient {
+    background: radial-gradient(circle at top right, rgba(132, 204, 22, 0.15), transparent 45%),
+                radial-gradient(circle at bottom left, rgba(5, 150, 105, 0.12), transparent 45%),
+                linear-gradient(to bottom, #F0FDF4, #FFFFFF);
+}
+
+.forest-card-gradient {
+    background: linear-gradient(135deg, #064E3B 0%, #047857 100%);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #F1F5F9;
+}
+::-webkit-scrollbar-thumb {
+    background: #A7F3D0;
+    border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #6EE7B7;
+}
+
+/* FullCalendar Customizations */
+.fc {
+    font-family: inherit !important;
+}
+.fc-header-toolbar {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem !important;
+}
+.fc .fc-button-primary {
+    background-color: #059669 !important;
+    border-color: #059669 !important;
+    font-weight: 500 !important;
+    border-radius: 0.5rem !important;
+    padding: 0.4rem 0.9rem !important;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+    transition: all 0.2s ease !important;
+}
+.fc .fc-button-primary:hover {
+    background-color: #047857 !important;
+    border-color: #047857 !important;
+}
+.fc .fc-button-primary:disabled {
+    background-color: #94A3B8 !important;
+    border-color: #94A3B8 !important;
+}
+.fc-event {
+    border-radius: 6px !important;
+    padding: 2px 6px !important;
+    font-size: 0.85rem !important;
+    font-weight: 500 !important;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.fc-event:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.15);
+}
+
+/* BIB / E-Ticket Styles for Print */
+@media print {
+    body {
+        background: #FFFFFF !important;
+        color: #000000 !important;
+    }
+    .no-print {
+        display: none !important;
+    }
+    .print-container {
+        box-shadow: none !important;
+        border: 2px dashed #059669 !important;
+        page-break-inside: avoid;
+    }
+}
