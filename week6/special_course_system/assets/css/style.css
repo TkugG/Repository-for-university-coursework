@@ -1,0 +1,117 @@
+/* ============================================================
+   ระบบขอเปิดหมู่เรียนพิเศษ — Global Stylesheet
+   ใช้ร่วมกับ Bootstrap 5
+   ============================================================ */
+
+/* ─── Base ─────────────────────────────────────────────── */
+body {
+    font-family: 'Sarabun', 'Segoe UI', sans-serif;
+    background-color: #f4f6fb;
+}
+
+/* ─── Cards ─────────────────────────────────────────────── */
+.card {
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: none;
+}
+
+.card-header {
+    border-radius: 12px 12px 0 0 !important;
+    font-weight: 600;
+}
+
+/* ─── Form ─────────────────────────────────────────────── */
+.form-label.required::after {
+    content: ' *';
+    color: #dc3545;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* ─── Buttons ───────────────────────────────────────────── */
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* ─── Info box ──────────────────────────────────────────── */
+.info-box {
+    background: #e7f3ff;
+    border-left: 4px solid #2196f3;
+    padding: 14px 18px;
+    border-radius: 6px;
+}
+
+/* ─── Status Timeline ───────────────────────────────────── */
+.timeline {
+    position: relative;
+    padding-left: 56px;
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 28px;
+}
+
+.timeline-item:last-child {
+    padding-bottom: 0;
+}
+
+/* vertical line */
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -36px;
+    top: 40px;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.timeline-item:last-child::before {
+    display: none;
+}
+
+/* circle icon */
+.timeline-icon {
+    position: absolute;
+    left: -56px;
+    top: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #dee2e6;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+}
+
+.timeline-item.step-completed .timeline-icon {
+    background: #28a745;
+    color: #fff;
+}
+
+.timeline-item.step-active .timeline-icon {
+    background: #667eea;
+    color: #fff;
+}
+
+/* ─── Responsive ─────────────────────────────────────────── */
+@media (max-width: 576px) {
+    .card-body {
+        padding: 1rem;
+    }
+}

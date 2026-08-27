@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>System Diagrams — special_course_system</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
+  <style>
+    :root {
+      --blue:   #1565c0;
+      --orange: #e65100;
+      --green:  #1b5e20;
+      --purple: #4a148c;
+      --teal:   #006064;
+      --bg:     #f4f6fb;
+      --card:   #ffffff;
+      --border: #e0e4f0;
+      --text:   #1e1e2e;
+      --muted:  #5a6380;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', 'Sarabun', sans-serif; background: var(--bg); color: var(--text); }
+
+    /* ── NAV ── */
+    nav {
+      background: #0d1b4b;
+      color: #fff;
+      padding: 0 24px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,.25);
+      overflow-x: auto;
+    }
+    nav .brand {
+      font-size: .85rem;
+      font-weight: 700;
+      color: #90caf9;
+      padding: 14px 16px 14px 0;
+      white-space: nowrap;
+      border-right: 1px solid #ffffff22;
+      margin-right: 8px;
+    }
+    nav a {
+      color: #cfd8dc;
+      text-decoration: none;
+      padding: 14px 14px;
+      font-size: .8rem;
+      white-space: nowrap;
+      border-bottom: 3px solid transparent;
+      transition: color .2s, border-color .2s;
+    }
+    nav a:hover, nav a.active { color: #fff; border-bottom-color: #42a5f5; }
+
+    /* ── LAYOUT ── */
+    .page { max-width: 1140px; margin: 0 auto; padding: 32px 16px 64px; }
+
+    /* ── SECTION ── */
+    .section { margin-bottom: 48px; }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .section-num {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      color: #fff;
+      font-weight: 700;
+      font-size: .85rem;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .section-title { font-size: 1.15rem; font-weight: 700; }
+    .section-sub   { font-size: .82rem; color: var(--muted); margin-top: 2px; }
+
+    /* ── DIAGRAM CARD ── */
+    .diagram-card {
+      background: var(--card);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 8px rgba(0,0,0,.06);
+      padding: 28px 20px;
+      overflow-x: auto;
+      margin-bottom: 16px;
+    }
+    .mermaid { min-width: 600px; }
+
+    /* ── EXPLAINER ── */
+    .explainer {
+      background: var(--card);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      padding: 20px 24px;
+      font-size: .875rem;
+      line-height: 1.75;
+    }
+    .explainer h4 {
+      font-size: .92rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: var(--blue);
+    }
+    .explainer p { margin-bottom: 8px; color: #333; }
+    .explainer p:last-child { margin-bottom: 0; }
+
+    .tag-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: .75rem;
+      font-weight: 600;
+    }
+    .tag-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+    /* ── LEGEND STRIP ── */
+    .legend {
+      display: flex; flex-wrap: wrap; gap: 10px;
+      margin-top: 12px;
+      padding: 10px 14px;
+      background: #f8f9ff;
+      border-radius: 8px;
+      font-size: .75rem;
+    }
+    .legend-item { display: flex; align-items: center; gap: 5px; }
+    .legend-swatch { width: 12px; height: 12px; border-radius: 2px; }
+
+    /* ── TWO-COL ── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media(max-width:768px){ .two-col { grid-template-columns: 1fr; } }
+
+    /* ── CONNECTION TABLE ── */
+    .conn-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+    .conn-table th { background: #f0f4ff; padding: 8px 12px; text-align: left; font-weight: 600; color: var(--blue); }
+    .conn-table td { padding: 8px 12px; border-top: 1px solid var(--border); }
+    .conn-table tr:hover td { background: #f9fbff; }
+    code { background: #eef0fa; padding: 1px 5px; border-radius: 3px; font-size: .8rem; font-family: monospace; }
+
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(135deg, #0d1b4b 0%, #1565c0 100%);
+      border-radius: 14px;
+      color: #fff;
+      padding: 36px 32px;
+      margin-bottom: 40px;
+    }
+    .hero h1 { font-size: 1.5rem; margin-bottom: 8px; }
+    .hero p  { font-size: .9rem; opacity: .85; max-width: 680px; }
+    .hero .badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+    .hero .badge {
+      background: rgba(255,255,255,.15);
+      border: 1px solid rgba(255,255,255,.3);
+      color: #fff;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: .75rem;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <div class="brand">📐 System Diagrams</div>
+  <a href="#s1">1. โครงสร้างไฟล์</a>
+  <a href="#s2">2. File Dependencies</a>
+  <a href="#s3">3. Class Diagram</a>
+  <a href="#s4">4. ERD</a>
+  <a href="#s5">5. Request Flow</a>
+  <a href="#s6">6. Sequence Diagram</a>
+</nav>
+
+<div class="page">
+
+  <!-- ── HERO ── -->
+  <div class="hero">
+    <h1>📐 special_course_system — System Architecture Diagrams</h1>
+    <p>วิเคราะห์และแสดงโครงสร้างระบบขอเปิดหมู่เรียนพิเศษ ด้วย Mermaid diagrams 6 แบบ ครอบคลุมตั้งแต่โครงสร้างไฟล์ ความสัมพันธ์ class ฐานข้อมูล ไปจนถึง request flow และ sequence diagram</p>
+    <div class="badges">
+      <span class="badge">PHP 8+</span>
+      <span class="badge">PDO + MySQL</span>
+      <span class="badge">Singleton Pattern</span>
+      <span class="badge">MVC-like</span>
+      <span class="badge">CSRF Protected</span>
+      <span class="badge">19 Files</span>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SECTION 1 — โครงสร้างไฟล์
+       ════════════════════════════════════════ -->
+  <div class="section" id="s1">
+    <div class="section-header">
+      <div class="section-num" style="background:#1565c0">1</div>
+      <div>
+        <div class="section-title">โครงสร้างไฟล์โปรเจ็กต์ (Project File Tree)</div>
+        <div class="section-sub">แสดง directory และไฟล์ทั้ง 19 รายการตามโครงสร้างจริง</div>
+      </div>
+    </div>
+
+    <div class="diagram-card">
+      <div class="mermaid">
+graph TD
+    ROOT["📁 special_course_system/"]
+
+    ROOT --> CONFIG["📁 config/"]
+    ROOT --> CLASSES["📁 classes/"]
+    ROOT --> INCLUDES["📁 includes/"]
+    ROOT --> ASSETS["📁 assets/"]
+    ROOT --> ADMIN["📁 admin/"]
+    ROOT --> API["📁 api/"]
+    ROOT --> ROOT_FILES["📄 Root Files"]
+
+    CONFIG  --> DB_CFG["database.php\n⚙ DB credentials + PDO options"]
+
+    CLASSES --> CLS_DB["Database.php\n🔒 Singleton PDO wrapper"]
+    CLASSES --> CLS_LOG["Logger.php\n📝 Audit trail"]
+    CLASSES --> CLS_STU["Student.php\n👤 Student model"]
+    CLASSES --> CLS_CRS["Course.php\n📚 Course model"]
+    CLASSES --> CLS_REQ["Request.php\n📋 Request model"]
+
+    INCLUDES --> INC_HDR["header.php\n🧩 Common HTML head + navbar"]
+    INCLUDES --> INC_FTR["footer.php\n🧩 Common footer + scripts"]
+    INCLUDES --> INC_FN["functions.php\n🛠 Helpers, CSRF, validation"]
+
+    ASSETS --> CSS["📁 css/\n   style.css"]
+    ASSETS --> JS["📁 js/\n   main.js"]
+
+    ROOT_FILES --> IDX["index.php\n🏠 Homepage"]
+    ROOT_FILES --> SUB["submit_request.php\n📝 ฟอร์มยื่นคำร้อง"]
+    ROOT_FILES --> TRK["track_request.php\n🔍 ติดตามสถานะ"]
+    ROOT_FILES --> SQL["database_schema.sql\n🗄 DDL Script"]
+
+    ADMIN --> ADM_DSH["dashboard.php\n📊 สรุปภาพรวม"]
+    ADMIN --> ADM_LST["manage_requests.php\n📋 รายการคำร้อง"]
+    ADMIN --> ADM_APV["approve_request.php\n✅ อนุมัติ/ปฏิเสธ"]
+
+    API --> API_CRS["check_course.php\n🔌 AJAX endpoint"]
+
+    classDef folder   fill:#e3f2fd,stroke:#1565c0,color:#0d47a1,font-weight:bold
+    classDef config   fill:#fff3e0,stroke:#e65100,color:#bf360c
+    classDef classes  fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+    classDef includes fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+    classDef pages    fill:#e0f2f1,stroke:#00695c,color:#004d40
+    classDef admin    fill:#fce4ec,stroke:#c62828,color:#7f0000
+    classDef api      fill:#fff8e1,stroke:#f57f17,color:#4e342e
+
+    class ROOT,CONFIG,CLASSES,INCLUDES,ASSETS,ADMIN,API folder
+    class DB_CFG config
+    class CLS_DB,CLS_LOG,CLS_STU,CLS_CRS,CLS_REQ classes
+    class INC_HDR,INC_FTR,INC_FN includes
+    class IDX,SUB,TRK,SQL,ROOT_FILES pages
+    class ADM_DSH,ADM_LST,ADM_APV admin
+    class API_CRS api
+      </div>
+    </div>
+
+    <div class="explainer">
+      <h4>🔍 คำอธิบายโครงสร้าง</h4>
+      <p><strong>config/</strong> — เก็บค่า DB credentials และ PDO options ทั้งหมด รองรับ Environment Variables เพื่อไม่ hardcode password</p>
+      <p><strong>classes/</strong> — Business Logic ทุกชิ้น แยกตาม domain (Student, Course, Request) บวก Database singleton และ Logger สำหรับ audit trail</p>
+      <p><strong>includes/</strong> — Shared fragments ที่ทุกหน้า require เหมือนกัน ได้แก่ header/footer HTML และ helper functions พร้อม CSRF utilities</p>
+      <p><strong>admin/</strong> — หน้าสำหรับเจ้าหน้าที่/สายวิชาเท่านั้น: dashboard สรุป, รายการ filter, และหน้า approve/reject คำร้อง</p>
+      <p><strong>api/</strong> — REST-style AJAX endpoint สำหรับ JavaScript ของ frontend เรียกตรวจสอบรายวิชาแบบ real-time</p>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SECTION 2 — File Dependencies
+       ════════════════════════════════════════ -->
+  <div class="section" id="s2">
+    <div class="section-header">
+      <div class="section-num" style="background:#6a1b9a">2</div>
+      <div>
+        <div class="section-title">File Dependencies (require_once Graph)</div>
+        <div class="section-sub">แสดงว่าแต่ละไฟล์ PHP โหลดไฟล์ใดบ้าง — วิเคราะห์จาก require_once จริงในโค้ด</div>
+      </div>
+    </div>
+
+    <div class="diagram-card">
+      <div class="mermaid">
+graph LR
+    %% ── Config & Foundation ──────────────────────
+    DB_CFG["⚙ config/database.php"]
+    CLS_DB["🔒 Database.php"]
+    CLS_LOG["📝 Logger.php"]
+    CLS_REQ["📋 Request.php"]
+    CLS_CRS["📚 Course.php"]
+    CLS_STU["👤 Student.php"]
+    FN["🛠 functions.php"]
+
+    %% ── Pages ───────────────────────────────────
+    IDX["🏠 index.php"]
+    SUB["📝 submit_request.php"]
+    TRK["🔍 track_request.php"]
+    ADM_DSH["📊 admin/dashboard.php"]
+    ADM_LST["📋 admin/manage_requests.php"]
+    ADM_APV["✅ admin/approve_request.php"]
+    API_CRS["🔌 api/check_course.php"]
+
+    %% ── Dependencies ─────────────────────────────
+    CLS_LOG --> CLS_DB
+    CLS_REQ --> CLS_DB
+    CLS_REQ --> CLS_LOG
+    CLS_CRS --> CLS_DB
+    CLS_STU --> CLS_DB
+
+    IDX     --> DB_CFG & CLS_DB & CLS_LOG & CLS_REQ & FN
+    SUB     --> DB_CFG & CLS_DB & CLS_LOG & CLS_REQ & CLS_CRS & CLS_STU & FN
+    TRK     --> DB_CFG & CLS_DB & CLS_LOG & CLS_REQ & FN
+    ADM_DSH --> DB_CFG & CLS_DB & CLS_LOG & CLS_REQ & FN
+    ADM_LST --> DB_CFG & CLS_DB & CLS_LOG & CLS_REQ & FN
+    ADM_APV --> DB_CFG & CLS_DB & CLS_LOG & CLS_REQ & FN
+    API_CRS --> DB_CFG & CLS_DB & CLS_CRS & FN
+
+    %% ── Styles ───────────────────────────────────
+    classDef config   fill:#fff3e0,stroke:#ef6c00,color:#3e1e00,font-weight:bold
+    classDef core     fill:#e8eaf6,stroke:#3949ab,color:#1a237e,font-weight:bold
+    classDef model    fill:#f3e5f5,stroke:#7b1fa2,color:#4a148c
+    classDef helper   fill:#e8f5e9,stroke:#388e3c,color:#1b5e20
+    classDef page     fill:#e0f7fa,stroke:#00838f,color:#004d40
+    classDef adminp   fill:#fce4ec,stroke:#c62828,color:#7f0000
+    classDef apip     fill:#fff8e1,stroke:#f9a825,color:#4e342e
+
+    class DB_CFG config
+    class CLS_DB core
+    class CLS_LOG,CLS_REQ,CLS_CRS,CLS_STU model
+    class FN helper
+    class IDX,SUB,TRK page
+    class ADM_DSH,ADM_LST,ADM_APV adminp
+    class API_CRS apip
+      </div>
+    </div>
+
+    <div class="legend">
+      <div class="legend-item"><div class="legend-swatch" style="background:#ef6c00"></div> Config</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#3949ab"></div> Core (Database)</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#7b1fa2"></div> Model Classes</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#388e3c"></div> Helper Functions</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#00838f"></div> Public Pages</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#c62828"></div> Admin Pages</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#f9a825"></div> API Endpoint</div>
+    </div>
+
+    <div class="explainer" style="margin-top:12px">
+      <h4>🔗 การเชื่อมต่อที่สำคัญ</h4>
+      <table class="conn-table">
+        <thead><tr><th>ไฟล์ที่โหลด</th><th>โหลดจาก</th><th>เหตุผล</th></tr></thead>
+        <tbody>
+          <tr><td><code>Database.php</code></td><td>ทุก Model Class</td><td>ทุก class ต้องการ PDO connection ผ่าน Singleton</td></tr>
+          <tr><td><code>Logger.php</code></td><td><code>Request.php</code></td><td>Request inject Logger เพื่อบันทึก audit trail</td></tr>
+          <tr><td><code>Course.php + Student.php</code></td><td><code>submit_request.php</code> เท่านั้น</td><td>ตรวจสอบสิทธิ์และวิชาก่อน create คำร้อง</td></tr>
+          <tr><td><code>Course.php</code></td><td><code>api/check_course.php</code></td><td>AJAX endpoint ใช้ Course โดยตรง ไม่ผ่าน Request</td></tr>
+          <tr><td><code>functions.php</code></td><td>ทุกหน้า</td><td>CSRF, validate, format, flash message</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SECTION 3 — Class Diagram
+       ════════════════════════════════════════ -->
+  <div class="section" id="s3">
+    <div class="section-header">
+      <div class="section-num" style="background:#00695c">3</div>
+      <div>
+        <div class="section-title">Class Diagram (UML)</div>
+        <div class="section-sub">แสดง properties, methods, และ relationships ระหว่าง class ทั้งหมด</div>
+      </div>
+    </div>
+
+    <div class="diagram-card">
+      <div class="mermaid">
+classDiagram
+    class Database {
+        -PDO connection
+        -Database instance$
+        -__construct()
+        +getInstance()$ Database
+        +getConnection() PDO
+        -__clone()
+        +__wakeup()
+    }
+
+    class Logger {
+        -PDO conn
+        +__construct()
+        +log(requestId, actionType, description, performedBy) void
+        +getByRequest(requestId) array
+        -resolveIp() string
+    }
+
+    class Student {
+        -PDO conn
+        -TABLE$ string
+        +__construct()
+        +findById(studentId) array|false
+        +findByEmail(email) array|false
+        +isEligibleForSpecialCourse(studentId) bool
+        +getAll() array
+    }
+
+    class Course {
+        -PDO conn
+        -TABLE$ string
+        +__construct()
+        +findByCode(courseCode) array|false
+        +searchByName(keyword) array
+        +isInRegularSchedule(studentId, courseCode, semester, year) bool
+        +getAll() array
+    }
+
+    class Request {
+        -PDO conn
+        -Logger logger
+        -TABLE$ string
+        -VIEW$ string
+        +__construct()
+        +create(data) array
+        +trackByNumber(requestNumber) array|false
+        +getAll(filters) array
+        +updateStatus(requestId, statusId, reviewNotes, reviewedBy, instructorId) bool
+        -generateRequestNumber(semester, academicYear) string
+    }
+
+    %% ── Relationships ────────────────────────────
+    Database ..> Logger     : "uses (via getInstance)"
+    Database ..> Student    : "uses (via getInstance)"
+    Database ..> Course     : "uses (via getInstance)"
+    Database ..> Request    : "uses (via getInstance)"
+
+    Request  *-- Logger     : "composes (injects in constructor)"
+
+    note for Database "Singleton Pattern\nเก็บ instance เดียวตลอด lifecycle"
+    note for Request  "ใช้ Logger สำหรับ audit trail\nทุก create / updateStatus"
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="explainer">
+        <h4>🧩 Design Patterns ที่ใช้</h4>
+        <p><strong>Singleton</strong> — <code>Database</code> ป้องกัน PDO connection ถูกสร้างซ้ำซ้อน ทุก class เรียก <code>Database::getInstance()</code> แล้วได้ instance เดิม</p>
+        <p><strong>Composition</strong> — <code>Request</code> สร้าง <code>Logger</code> ภายใน constructor เพื่อ inject dependency แทนการ inherit ตามหลัก Favor Composition over Inheritance</p>
+        <p><strong>SRP (Single Responsibility)</strong> — แยก Logger ออกจาก Request ทำให้แต่ละ class มีหน้าที่เดียว</p>
+      </div>
+      <div class="explainer">
+        <h4>📌 Method ที่น่าสนใจ</h4>
+        <p><code>Request::generateRequestNumber()</code> — สร้างหมายเลขอัตโนมัติ รูปแบบ <code>SCR-{ปี 2 หลัก}{เทอม}-{0001}</code> เช่น <code>SCR-671-0001</code></p>
+        <p><code>Student::isEligibleForSpecialCourse()</code> — ตรวจสิทธิ์ก่อน submit: ปี 4+ หรือนักศึกษาภาคค่ำ/เสาร์อาทิตย์</p>
+        <p><code>Logger::resolveIp()</code> — รองรับ Cloudflare, Proxy, Load Balancer โดยอ่าน header ตามลำดับ <code>CF → X-Forwarded-For → REMOTE_ADDR</code></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SECTION 4 — ERD
+       ════════════════════════════════════════ -->
+  <div class="section" id="s4">
+    <div class="section-header">
+      <div class="section-num" style="background:#c62828">4</div>
+      <div>
+        <div class="section-title">Entity-Relationship Diagram (ERD)</div>
+        <div class="section-sub">ความสัมพันธ์ระหว่าง 6 ตาราง + 1 View ในฐานข้อมูล special_course_db</div>
+      </div>
+    </div>
+
+    <div class="diagram-card">
+      <div class="mermaid">
+erDiagram
+    students {
+        VARCHAR  student_id       PK
+        VARCHAR  student_prefix
+        VARCHAR  student_firstname
+        VARCHAR  student_lastname
+        VARCHAR  student_email    UK
+        VARCHAR  student_phone
+        VARCHAR  faculty
+        VARCHAR  department
+        VARCHAR  major
+        TINYINT  study_year
+        ENUM     student_type
+        TIMESTAMP created_at
+    }
+
+    instructors {
+        INT      instructor_id    PK
+        VARCHAR  instructor_prefix
+        VARCHAR  instructor_firstname
+        VARCHAR  instructor_lastname
+        VARCHAR  instructor_email UK
+        VARCHAR  department
+        VARCHAR  position
+        ENUM     status
+    }
+
+    courses {
+        VARCHAR  course_code      PK
+        VARCHAR  course_name_th
+        VARCHAR  course_name_en
+        DECIMAL  credit_theory
+        DECIMAL  credit_practice
+        DECIMAL  credit_self
+        VARCHAR  department
+        VARCHAR  faculty
+        ENUM     course_level
+        ENUM     status
+    }
+
+    request_status {
+        TINYINT  status_id        PK
+        VARCHAR  status_code      UK
+        VARCHAR  status_name_th
+        VARCHAR  status_color
+        TINYINT  sort_order
+    }
+
+    special_course_requests {
+        INT      request_id       PK
+        VARCHAR  request_number   UK
+        VARCHAR  student_id       FK
+        VARCHAR  course_code      FK
+        INT      instructor_id    FK
+        TINYINT  status_id        FK
+        TINYINT  semester
+        SMALLINT academic_year
+        TEXT     reason
+        SMALLINT expected_students
+        TINYINT  is_in_regular_schedule
+        DATE     request_date
+        DATETIME review_date
+        VARCHAR  reviewed_by
+        TEXT     review_notes
+        DATETIME approval_date
+        VARCHAR  section_number
+    }
+
+    request_logs {
+        INT      log_id           PK
+        INT      request_id       FK
+        VARCHAR  action_type
+        TEXT     action_description
+        VARCHAR  performed_by
+        TIMESTAMP performed_at
+        VARCHAR  ip_address
+        TEXT     user_agent
+    }
+
+    students              ||--o{ special_course_requests : "ยื่น (student_id)"
+    courses               ||--o{ special_course_requests : "ขอเปิด (course_code)"
+    instructors           |o--o{ special_course_requests : "ได้รับมอบหมาย (instructor_id)"
+    request_status        ||--o{ special_course_requests : "มีสถานะ (status_id)"
+    special_course_requests ||--o{ request_logs          : "บันทึก audit (request_id)"
+      </div>
+    </div>
+
+    <div class="explainer">
+      <h4>🗄 การออกแบบฐานข้อมูล — จุดสำคัญ</h4>
+      <table class="conn-table">
+        <thead><tr><th>Relationship</th><th>Cardinality</th><th>ON DELETE / UPDATE</th><th>เหตุผล</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><code>students → requests</code></td>
+            <td>1 : N</td>
+            <td><code>ON UPDATE CASCADE</code></td>
+            <td>ถ้า student_id เปลี่ยน คำร้องทั้งหมดอัปเดตตาม</td>
+          </tr>
+          <tr>
+            <td><code>courses → requests</code></td>
+            <td>1 : N</td>
+            <td><code>ON UPDATE CASCADE</code></td>
+            <td>รหัสวิชาเปลี่ยนได้ (rebranding) คำร้องตามอัตโนมัติ</td>
+          </tr>
+          <tr>
+            <td><code>instructors → requests</code></td>
+            <td>1 : N (optional)</td>
+            <td><code>ON DELETE SET NULL</code></td>
+            <td>ถ้าอาจารย์ออก คำร้องยังอยู่ แค่ instructor_id = NULL</td>
+          </tr>
+          <tr>
+            <td><code>requests → logs</code></td>
+            <td>1 : N</td>
+            <td><code>ON DELETE CASCADE</code></td>
+            <td>ลบคำร้อง → log ที่เกี่ยวข้องลบตามทันที</td>
+          </tr>
+          <tr>
+            <td><code>request_status → requests</code></td>
+            <td>1 : N</td>
+            <td>—</td>
+            <td>Lookup table รองรับ 5 สถานะ: PENDING, REVIEWING, APPROVED, REJECTED, CANCELLED</td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="margin-top:12px; color:var(--muted)">
+        <strong>View:</strong> <code>vw_special_course_requests</code> — JOIN ทั้ง 5 ตารางพร้อมกัน ทำให้ query ข้อมูลสมบูรณ์ได้ใน statement เดียว
+      </p>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SECTION 5 — Request Flow (State Machine)
+       ════════════════════════════════════════ -->
+  <div class="section" id="s5">
+    <div class="section-header">
+      <div class="section-num" style="background:#e65100">5</div>
+      <div>
+        <div class="section-title">Request Lifecycle & State Machine</div>
+        <div class="section-sub">สถานะของคำร้องตั้งแต่ยื่นจนถึงผลลัพธ์สุดท้าย</div>
+      </div>
+    </div>
+
+    <div class="diagram-card">
+      <div class="mermaid">
+stateDiagram-v2
+    [*] --> Validation : นักศึกษากรอก Form + Submit
+
+    state Validation {
+        [*] --> CheckCSRF : POST request
+        CheckCSRF --> CheckStudentEligibility : CSRF OK
+        CheckCSRF --> [*] : 403 Abort
+        CheckStudentEligibility --> CheckRegularSchedule : ปี 4+ / ภาคค่ำ ✓
+        CheckStudentEligibility --> FormError : ไม่มีสิทธิ์
+        CheckRegularSchedule --> CreateRequest : ไม่มีในตารางปกติ ✓
+        CheckRegularSchedule --> FormError : มีในตารางปกติแล้ว
+    }
+
+    Validation --> PENDING : create() สำเร็จ\n+ Logger.log("CREATE")
+    FormError --> [*] : แสดงข้อผิดพลาด
+
+    PENDING : 🟡 PENDING\nรอดำเนินการ
+    REVIEWING : 🔵 REVIEWING\nกำลังตรวจสอบ (1–2 สัปดาห์)
+    APPROVED : 🟢 APPROVED\nอนุมัติ + มอบหมายอาจารย์
+    REJECTED : 🔴 REJECTED\nไม่อนุมัติ + ระบุเหตุผล
+    CANCELLED : ⚫ CANCELLED\nยกเลิก
+
+    PENDING   --> REVIEWING : เจ้าหน้าที่รับเรื่อง
+    REVIEWING --> APPROVED  : updateStatus(3) + instructor_id\n+ Logger.log("UPDATE_STATUS")
+    REVIEWING --> REJECTED  : updateStatus(4) + review_notes\n+ Logger.log("UPDATE_STATUS")
+    PENDING   --> CANCELLED : นักศึกษาขอยกเลิก
+
+    APPROVED --> Enrolled : นักศึกษาลงทะเบียนชำระเงิน
+    Enrolled --> [*] : ติดต่ออาจารย์ — เริ่มเรียน
+
+    REJECTED --> [*] : แจ้งผลนักศึกษา
+    CANCELLED --> [*]
+      </div>
+    </div>
+
+    <div class="explainer">
+      <h4>🔄 State Transitions — รายละเอียด</h4>
+      <div class="tag-grid">
+        <span class="tag" style="background:#fff9c4;border:1px solid #f9a825;color:#4e342e">
+          <span class="tag-dot" style="background:#f9a825"></span> PENDING (status_id=1) — initial state
+        </span>
+        <span class="tag" style="background:#e0f7fa;border:1px solid #00838f;color:#004d40">
+          <span class="tag-dot" style="background:#00838f"></span> REVIEWING (2) — เจ้าหน้าที่รับเรื่อง
+        </span>
+        <span class="tag" style="background:#e8f5e9;border:1px solid #2e7d32;color:#1b5e20">
+          <span class="tag-dot" style="background:#2e7d32"></span> APPROVED (3) — อนุมัติ + approval_date
+        </span>
+        <span class="tag" style="background:#fce4ec;border:1px solid #c62828;color:#7f0000">
+          <span class="tag-dot" style="background:#c62828"></span> REJECTED (4) — ไม่อนุมัติ + review_notes
+        </span>
+        <span class="tag" style="background:#eceff1;border:1px solid #546e7a;color:#263238">
+          <span class="tag-dot" style="background:#546e7a"></span> CANCELLED (5) — ยกเลิกโดยนักศึกษา
+        </span>
+      </div>
+      <p style="margin-top:12px">ทุกการเปลี่ยนสถานะผ่าน <code>Request::updateStatus()</code> ซึ่งใช้ <strong>Database Transaction</strong> และเรียก <code>Logger::log()</code> อัตโนมัติ เพื่อให้ audit trail สมบูรณ์แม้ transaction rollback</p>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SECTION 6 — Sequence Diagram
+       ════════════════════════════════════════ -->
+  <div class="section" id="s6">
+    <div class="section-header">
+      <div class="section-num" style="background:#4a148c">6</div>
+      <div>
+        <div class="section-title">Sequence Diagram — การยื่นคำร้องแบบ step-by-step</div>
+        <div class="section-sub">แสดงการเรียก method ระหว่าง Actor, Page, Classes, และ Database จริงในโค้ด</div>
+      </div>
+    </div>
+
+    <div class="diagram-card">
+      <div class="mermaid">
+sequenceDiagram
+    actor Student as 👩‍🎓 นักศึกษา
+    participant Page as submit_request.php
+    participant Fn as functions.php
+    participant StM as Student Model
+    participant CrM as Course Model
+    participant ReM as Request Model
+    participant Log as Logger
+    participant DB  as Database (PDO)
+
+    Student ->> Page : POST form (student_id, course_code, ...)
+
+    Page ->> Fn : verifyCsrfToken()
+    activate Fn
+    Fn -->> Page : ✓ token OK
+    deactivate Fn
+
+    Page ->> Fn : validateRequestForm(data)
+    activate Fn
+    Fn -->> Page : [] (no errors)
+    deactivate Fn
+
+    Page ->> StM : isEligibleForSpecialCourse(student_id)
+    activate StM
+    StM ->> DB : SELECT * FROM students WHERE student_id=?
+    DB -->> StM : student row
+    StM -->> Page : true (ปี 4 ✓)
+    deactivate StM
+
+    Page ->> CrM : isInRegularSchedule(sid, code, sem, year)
+    activate CrM
+    CrM ->> DB : SELECT COUNT FROM enrollments...
+    DB -->> CrM : 0
+    CrM -->> Page : false (ไม่มีในตารางปกติ ✓)
+    deactivate CrM
+
+    Page ->> ReM : create(data)
+    activate ReM
+
+    ReM ->> DB : BEGIN TRANSACTION
+    ReM ->> DB : SELECT COUNT(*) — generateRequestNumber()
+    DB -->> ReM : count = 0 → SCR-671-0001
+
+    ReM ->> DB : INSERT INTO special_course_requests(...)
+    DB -->> ReM : lastInsertId = 42
+
+    ReM ->> Log : log(42, "CREATE", "สร้างคำร้อง...")
+    activate Log
+    Log ->> DB : INSERT INTO request_logs(...)
+    DB -->> Log : OK
+    deactivate Log
+
+    ReM ->> DB : COMMIT
+    ReM -->> Page : {success:true, request_number:"SCR-671-0001"}
+    deactivate ReM
+
+    Page -->> Student : แสดงหน้า Success\n+ หมายเลขคำร้อง SCR-671-0001
+      </div>
+    </div>
+
+    <div class="explainer">
+      <h4>📡 การไหลของข้อมูล (Data Flow) ในการยื่นคำร้อง</h4>
+      <p><strong>ขั้นที่ 1 — Security Gate:</strong> <code>verifyCsrfToken()</code> ตรวจสอบ token ก่อน และ abort ทันทีถ้าไม่ผ่าน ป้องกัน CSRF attack</p>
+      <p><strong>ขั้นที่ 2 — Validation:</strong> <code>validateRequestForm()</code> ตรวจ format ฝั่ง server (ไม่พึ่ง JS client เพียงอย่างเดียว)</p>
+      <p><strong>ขั้นที่ 3 — Business Rules:</strong> ตรวจสิทธิ์นักศึกษาและตรวจวิชาซ้ำ — ถ้าไม่ผ่านจะ short-circuit คืน error ทันทีโดยไม่สร้างคำร้อง</p>
+      <p><strong>ขั้นที่ 4 — Atomic Write:</strong> <code>Request::create()</code> ใช้ <strong>Transaction</strong> ครอบ INSERT + Logger.log ถ้า Logger ล้มเหลว ทั้ง transaction จะ rollback ทำให้ข้อมูลสมบูรณ์เสมอ</p>
+    </div>
+
+    <!-- ── BONUS: Admin sequence ── -->
+    <div style="margin-top:20px">
+      <div class="diagram-card">
+        <div class="mermaid">
+sequenceDiagram
+    actor Admin as 🧑‍💼 เจ้าหน้าที่
+    participant Apv as admin/approve_request.php
+    participant ReM as Request Model
+    participant Log as Logger
+    participant DB  as Database (PDO)
+
+    Admin ->> Apv : GET ?id=42 — เปิดหน้าพิจารณา
+    Apv ->> DB : SELECT * FROM vw_special_course_requests WHERE request_id=42
+    DB -->> Apv : request data (รวม student, course, status)
+    Apv -->> Admin : แสดงฟอร์ม + รายละเอียดคำร้อง
+
+    Admin ->> Apv : POST {status_id=3, instructor_id=5, review_notes="..."}
+    Apv ->> Apv : verifyCsrfToken() ✓
+
+    Apv ->> ReM : updateStatus(42, 3, notes, "Admin", 5)
+    activate ReM
+    ReM ->> DB : BEGIN TRANSACTION
+
+    ReM ->> DB : UPDATE special_course_requests\nSET status_id=3, instructor_id=5,\napproval_date=NOW()...
+
+    ReM ->> Log : log(42, "UPDATE_STATUS", "อนุมัติคำร้อง: ...")
+    activate Log
+    Log ->> DB : INSERT INTO request_logs(...)
+    deactivate Log
+
+    ReM ->> DB : COMMIT
+    ReM -->> Apv : true
+    deactivate ReM
+
+    Apv -->> Admin : redirect → manage_requests.php\n+ flash "บันทึกผลเรียบร้อย"
+        </div>
+      </div>
+      <div class="explainer">
+        <h4>✅ Admin Approval Flow</h4>
+        <p><code>approve_request.php</code> โหลดข้อมูลจาก <strong>View</strong> (<code>vw_special_course_requests</code>) ที่ JOIN ครบทุกตาราง ทำให้แสดงชื่อนักศึกษา ชื่อวิชา และสถานะปัจจุบันได้ใน query เดียว</p>
+        <p>เมื่อ Admin กด submit <code>Request::updateStatus()</code> จะเพิ่ม <code>instructor_id</code> และ <code>approval_date</code> เฉพาะกรณี <code>status_id = 3 (APPROVED)</code> เท่านั้น ป้องกัน null ผิดพลาด</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /.page -->
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      primaryColor:       '#e8eaf6',
+      primaryTextColor:   '#1a237e',
+      primaryBorderColor: '#3949ab',
+      lineColor:          '#546e7a',
+      secondaryColor:     '#f3e5f5',
+      tertiaryColor:      '#e8f5e9',
+      fontSize:           '13px',
+    },
+    flowchart:   { curve: 'basis', padding: 18 },
+    classDiagram:{ useMaxWidth: false },
+    er:          { useMaxWidth: false },
+    sequence:    { useMaxWidth: false, showSequenceNumbers: true },
+  });
+
+  // Highlight nav link on scroll
+  const sections = document.querySelectorAll('.section');
+  const navLinks = document.querySelectorAll('nav a');
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        navLinks.forEach(a => {
+          a.classList.toggle('active', a.getAttribute('href') === '#' + e.target.id);
+        });
+      }
+    });
+  }, { threshold: 0.3 });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>

@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ระบบขอเปิดหมู่เรียนพิเศษ – การวิเคราะห์และออกแบบระบบ</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
+  <style>
+    :root {
+      --input-color: #1a73e8;
+      --input-bg: #e8f0fe;
+      --process-color: #e67700;
+      --process-bg: #fff3e0;
+      --output-color: #1e8c45;
+      --output-bg: #e6f4ea;
+      --card-shadow: 0 2px 8px rgba(0,0,0,0.10);
+      --border-radius: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Sarabun', 'Segoe UI', sans-serif;
+      background: #f4f6fb;
+      color: #2c2c2c;
+      min-height: 100vh;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1a237e 0%, #1565c0 100%);
+      color: white;
+      padding: 32px 24px 24px;
+      text-align: center;
+    }
+    header h1 { font-size: 1.7rem; font-weight: 700; margin-bottom: 8px; }
+    header p  { font-size: 1rem; opacity: 0.85; }
+
+    .ipo-pills {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin: 28px auto 0;
+      flex-wrap: wrap;
+    }
+    .pill {
+      padding: 6px 20px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    .pill-i  { background: #90caf9; color: #0d47a1; }
+    .pill-p  { background: #ffcc80; color: #bf360c; }
+    .pill-o  { background: #a5d6a7; color: #1b5e20; }
+
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px 16px 48px;
+    }
+
+    /* ─── DIAGRAM SECTION ─── */
+    .section-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #1a237e;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 22px;
+      background: #1565c0;
+      border-radius: 2px;
+    }
+
+    .diagram-card {
+      background: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--card-shadow);
+      padding: 28px 16px;
+      margin-bottom: 32px;
+      overflow-x: auto;
+    }
+    .diagram-card .mermaid {
+      min-width: 640px;
+    }
+
+    /* ─── IPO CARDS ─── */
+    .ipo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+
+    .ipo-card {
+      background: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+    }
+
+    .ipo-card-header {
+      padding: 16px 20px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .ipo-card-header .icon { font-size: 1.3rem; }
+
+    .card-input  .ipo-card-header { background: var(--input-color); }
+    .card-process .ipo-card-header { background: var(--process-color); }
+    .card-output .ipo-card-header { background: var(--output-color); }
+
+    .ipo-card-body { padding: 18px 20px; }
+
+    .detail-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 12px;
+      font-size: 0.93rem;
+      line-height: 1.6;
+    }
+    .detail-item:last-child { margin-bottom: 0; }
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 7px;
+    }
+    .card-input  .dot { background: var(--input-color); }
+    .card-process .dot { background: var(--process-color); }
+    .card-output .dot { background: var(--output-color); }
+
+    .sub-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin: 14px 0 6px;
+      opacity: 0.6;
+    }
+
+    /* ─── FLOW DESCRIPTION ─── */
+    .flow-section {
+      background: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--card-shadow);
+      padding: 28px 24px;
+      margin-bottom: 32px;
+    }
+
+    .flow-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .flow-step {
+      display: flex;
+      gap: 16px;
+      position: relative;
+      padding-bottom: 24px;
+    }
+    .flow-step:last-child { padding-bottom: 0; }
+    .flow-step:last-child .step-line { display: none; }
+
+    .step-left {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .step-circle {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: white;
+      flex-shrink: 0;
+    }
+    .step-line {
+      width: 2px;
+      flex: 1;
+      background: #e0e0e0;
+      margin: 4px 0;
+    }
+    .step-content { flex: 1; padding-top: 4px; }
+    .step-content h4 {
+      font-size: 0.97rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .step-content p {
+      font-size: 0.87rem;
+      color: #555;
+      line-height: 1.6;
+    }
+
+    .phase-badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-bottom: 6px;
+    }
+    .badge-i { background: var(--input-bg);   color: var(--input-color); }
+    .badge-p { background: var(--process-bg); color: var(--process-color); }
+    .badge-o { background: var(--output-bg);  color: var(--output-color); }
+
+    .step-i .step-circle { background: var(--input-color); }
+    .step-p .step-circle { background: var(--process-color); }
+    .step-o .step-circle { background: var(--output-color); }
+
+    /* ─── LEGEND ─── */
+    .legend {
+      background: #f8f9ff;
+      border: 1px solid #dce3f7;
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-top: 20px;
+      font-size: 0.85rem;
+    }
+    .legend h4 { font-weight: 700; margin-bottom: 10px; color: #1a237e; }
+    .legend-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 8px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .legend-box {
+      width: 14px; height: 14px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    footer {
+      text-align: center;
+      color: #888;
+      font-size: 0.8rem;
+      padding-bottom: 24px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>📚 ระบบขอเปิดหมู่เรียนพิเศษ</h1>
+  <p>การวิเคราะห์และออกแบบระบบสารสนเทศ | กรอบ IPO (Input–Process–Output)</p>
+  <div class="ipo-pills">
+    <span class="pill pill-i">⬇ Input — การรวบรวมข้อมูล</span>
+    <span class="pill pill-p">⚙ Process — การประมวลผล</span>
+    <span class="pill pill-o">⬆ Output — การแสดงผล</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- ── DIAGRAM ── -->
+  <div class="section-title">แผนภาพระบบ (System Diagram)</div>
+  <div class="diagram-card">
+    <div class="mermaid">
+flowchart TD
+    %% ─── INPUT ───────────────────────────────────────────
+    subgraph INPUT["📥  INPUT — การรวบรวมข้อมูล"]
+        direction TB
+        A([👩‍🎓 นักศึกษา\nต้องการเปิดรายวิชาพิเศษ])
+        B{{"🔍 ตรวจสอบ:\nวิชานี้มีในตารางปกติไหม?"}}
+        C[/"📋 กรอก Google Form\n- ชื่อ-รหัสนักศึกษา\n- รายวิชาที่ต้องการ\n- เหตุผล"/]
+        A --> B
+        B -->|"ไม่มีในตารางปกติ"| C
+        B -->|"มีในตารางปกติ"| STOP(["🚫 ไม่ต้องยื่นคำร้อง"])
+    end
+
+    %% ─── PROCESS ─────────────────────────────────────────
+    subgraph PROCESS["⚙️  PROCESS — การประมวลผล"]
+        direction TB
+        D[["📂 รวบรวมคำร้องทั้งหมด\n(สำนักส่งเสริมวิชาการฯ)"]]
+        E{{"✅ ตรวจสอบเงื่อนไข:\n- นักศึกษาปี 4 / ภาคค่ำ\n- ครบเกณฑ์จำนวนคน?"}}
+        F[["🏫 สายวิชาพิจารณาอนุมัติ\nและหาอาจารย์ผู้สอน"]]
+        G[["⏳ รอผลสรุป\n1–2 สัปดาห์หลังหมดเขต"]]
+        D --> E
+        E -->|"ผ่านเงื่อนไข"| F
+        E -->|"ไม่ผ่านเงื่อนไข"| REJ(["❌ ปฏิเสธคำร้อง"])
+        F --> G
+    end
+
+    %% ─── OUTPUT ──────────────────────────────────────────
+    subgraph OUTPUT["📤  OUTPUT — การแสดงผล"]
+        direction TB
+        H[/"📢 ประกาศผลการยื่นคำร้อง"/]
+        I{{"อนุมัติ?"}}
+        J[["💳 ลงทะเบียน\nชำระเงิน"]]
+        K[["📞 ติดต่ออาจารย์ผู้สอน\nเพื่อเริ่มเรียน"]]
+        H --> I
+        I -->|"✅ อนุมัติ"| J
+        I -->|"❌ ไม่อนุมัติ"| NOTI(["📩 แจ้งผลนักศึกษา"])
+        J --> K
+    end
+
+    %% ─── CONNECTIONS ──────────────────────────────────────
+    C --> D
+    G --> H
+
+    %% ─── STYLES ───────────────────────────────────────────
+    classDef inputNode  fill:#e8f0fe,stroke:#1a73e8,stroke-width:2px,color:#0d2b6b
+    classDef procNode   fill:#fff3e0,stroke:#e67700,stroke-width:2px,color:#5f2b00
+    classDef outNode    fill:#e6f4ea,stroke:#1e8c45,stroke-width:2px,color:#0d3320
+    classDef stopNode   fill:#fce4ec,stroke:#c62828,stroke-width:2px,color:#7f0000
+    classDef decision   fill:#fffde7,stroke:#f9a825,stroke-width:2px,color:#4a3000
+
+    class A,C inputNode
+    class D,F,G procNode
+    class H,J,K outNode
+    class STOP,REJ,NOTI stopNode
+    class B,E,I decision
+
+    style INPUT   fill:#e8f0fe44,stroke:#1a73e8,stroke-width:2px,rx:10
+    style PROCESS fill:#fff3e044,stroke:#e67700,stroke-width:2px,rx:10
+    style OUTPUT  fill:#e6f4ea44,stroke:#1e8c45,stroke-width:2px,rx:10
+    </div>
+  </div>
+
+  <!-- ── IPO CARDS ── -->
+  <div class="section-title">รายละเอียดแต่ละขั้นตอน</div>
+  <div class="ipo-grid">
+
+    <!-- INPUT -->
+    <div class="ipo-card card-input">
+      <div class="ipo-card-header">
+        <span class="icon">📥</span> Input — การรวบรวมข้อมูล
+      </div>
+      <div class="ipo-card-body">
+        <div class="sub-label">แหล่งข้อมูล</div>
+        <div class="detail-item">
+          <div class="dot"></div>
+          <span>นักศึกษาที่ต้องการเปิดวิชาเรียนพิเศษ (ปี 4 หรือภาคค่ำ)</span>
+        </div>
+        <div class="sub-label">ข้อมูลดิบที่รับเข้า</div>
+        <div class="detail-item">
+          <div class="dot"></div>
+          <span><strong>รายวิชาที่ต้องการ</strong> — ตรวจสอบก่อนว่าไม่มีในตารางปกติ</span>
+        </div>
+        <div class="detail-item">
+          <div class="dot"></div>
+          <span><strong>ข้อมูลส่วนตัว</strong> — ชื่อ รหัสนักศึกษา ระดับชั้น สาขาวิชา</span>
+        </div>
+        <div class="detail-item">
+          <div class="dot"></div>
+          <span><strong>ช่องทางรับข้อมูล</strong> — Google Form ของสำนักส่งเสริมวิชาการและงานทะเบียน</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROCESS -->
+    <div class="ipo-card card-process">
+      <div class="ipo-card-header">
+        <span class="icon">⚙️</span> Process — การประมวลผล
+      </div>
+      <div class="ipo-card-body">
+        <div class="sub-label">ขั้นที่ 1 — ตรวจสอบ & จัดหมวดหมู่</div>
+        <div class="detail-item">
+          <div class="dot"></div>
+          <span>เจ้าหน้าที่ตรวจสอบเงื่อนไข: นักศึกษาปี 4 หรือภาคค่ำ และจำนวนผู้ขอครบเกณฑ์</span>
+        </div>
+        <div class="sub-label">ขั้นที่ 2 — วิเคราะห์ & ตัดสินใจ</div>
+        <div class="detail-item">
+          <div class="dot"></div>
+          <span>สายวิชาพิจารณาอนุมัติ และจัดหาอาจารย์ผู้สอนสำหรับรายวิชานั้น</span>
+        </div>
+        <div class="sub-label">ขั้นที่ 3 — รอผลสรุป</div>
+        <div class="detail-item">
+          <div class="dot"></div>
+          <span>รวบรวมคำร้องทั้งหมด <strong>1–2 สัปดาห์</strong> หลังหมดเขตรับเรื่อง เพื่อสรุปผลรายวิชาที่เปิดได้</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- OUTPUT -->
+    <div class="ipo-card card-output">
+      <div class="ipo-card-header">
+        <span class="icon">📤</span> Output — การแสดงผล
+      </div>
+      <div class="ipo-card-body">
+        <div class="sub-label">สารสนเทศที่ได้</div>
+        <div class="detail-item">
+          <div class="dot"></div>
+          <span><strong>ประกาศผลการยื่นคำร้อง</strong> — แจ้งผลอนุมัติ/ไม่อนุมัติแก่นักศึกษา</span>
+        </div>
+        <div class="sub-label">การดำเนินการต่อเนื่อง (กรณีอนุมัติ)</div>
+        <div class="detail-item">
+          <div class="dot"></div>
+          <span><strong>ลงทะเบียนชำระเงิน</strong> — นักศึกษายืนยันสิทธิ์และชำระค่าเรียน</span>
+        </div>
+        <div class="detail-item">
+          <div class="dot"></div>
+          <span><strong>ติดต่ออาจารย์ผู้สอน</strong> — นัดหมายเพื่อเริ่มการเรียนการสอนจริง</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── FLOW DESCRIPTION ── -->
+  <div class="section-title">การเชื่อมโยงระหว่างขั้นตอน</div>
+  <div class="flow-section">
+    <div class="flow-steps">
+
+      <div class="flow-step step-i">
+        <div class="step-left">
+          <div class="step-circle">1</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <span class="phase-badge badge-i">INPUT</span>
+          <h4>นักศึกษายื่นคำร้องผ่าน Google Form</h4>
+          <p>ก่อนกรอกฟอร์ม นักศึกษาต้องตรวจสอบว่ารายวิชาที่ต้องการ <em>ไม่มี</em>ในตารางเรียนปกติของภาคการศึกษานั้น ข้อมูลที่กรอกได้แก่ ชื่อ-รหัสนักศึกษา รายวิชา และเหตุผลที่ต้องการเปิด ข้อมูลนี้ถือเป็น <strong>"ข้อมูลดิบ (Raw Data)"</strong> ที่ยังไม่มีการประมวลผลใดๆ</p>
+        </div>
+      </div>
+
+      <div class="flow-step step-p">
+        <div class="step-left">
+          <div class="step-circle">2</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <span class="phase-badge badge-p">PROCESS</span>
+          <h4>สำนักวิชาการรับข้อมูลและตรวจสอบเงื่อนไข</h4>
+          <p>ข้อมูลดิบจาก Google Form ถูกส่งต่อมายังเจ้าหน้าที่ เพื่อตรวจสอบว่าผู้ขอและรายวิชาเป็นไปตามเกณฑ์ (เช่น เป็นนักศึกษาปี 4, ภาคค่ำ, มีจำนวนนักศึกษาขั้นต่ำ) นี่คือจุด <strong>เชื่อมต่อระหว่าง Input → Process</strong></p>
+        </div>
+      </div>
+
+      <div class="flow-step step-p">
+        <div class="step-left">
+          <div class="step-circle">3</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <span class="phase-badge badge-p">PROCESS</span>
+          <h4>สายวิชาพิจารณาและจัดหาอาจารย์</h4>
+          <p>เมื่อผ่านการกรองเบื้องต้น สายวิชาจะวิเคราะห์ทรัพยากร (อาจารย์ ห้องเรียน เวลา) เพื่อประกอบการตัดสินใจ ระบบรอรวมผลทุกคำร้องและใช้เวลา <strong>1–2 สัปดาห์</strong> เพื่อสรุป ทำให้กระบวนการนี้เป็น <em>Batch Processing</em></p>
+        </div>
+      </div>
+
+      <div class="flow-step step-o">
+        <div class="step-left">
+          <div class="step-circle">4</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <span class="phase-badge badge-o">OUTPUT</span>
+          <h4>ประกาศผลและนักศึกษาดำเนินการต่อ</h4>
+          <p>ผลจากการประมวลผลถูกแปลงเป็น <strong>"สารสนเทศ"</strong> ในรูปประกาศผล ซึ่งนักศึกษาสามารถนำไปใช้ตัดสินใจลงทะเบียนและชำระเงินได้ทันที นี่คือจุด <strong>เชื่อมต่อระหว่าง Process → Output</strong></p>
+        </div>
+      </div>
+
+      <div class="flow-step step-o">
+        <div class="step-left">
+          <div class="step-circle">5</div>
+        </div>
+        <div class="step-content">
+          <span class="phase-badge badge-o">OUTPUT → FEEDBACK</span>
+          <h4>ลงทะเบียนและติดต่ออาจารย์ (Feedback Loop)</h4>
+          <p>การที่นักศึกษาลงทะเบียนสำเร็จและติดต่ออาจารย์เป็นผล <em>Feedback</em> กลับสู่ระบบ — ยืนยันว่าหมู่เรียนพิเศษนั้นมีผู้เรียนจริง และข้อมูลนี้จะกลายเป็น Input ให้ฝ่ายวิชาการวางแผนภาคการศึกษาถัดไป</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- LEGEND -->
+    <div class="legend">
+      <h4>🗺 สัญลักษณ์ใน Diagram</h4>
+      <div class="legend-grid">
+        <div class="legend-item"><div class="legend-box" style="background:#e8f0fe;border:2px solid #1a73e8"></div> Input Node (รับข้อมูล)</div>
+        <div class="legend-item"><div class="legend-box" style="background:#fff3e0;border:2px solid #e67700"></div> Process Node (ประมวลผล)</div>
+        <div class="legend-item"><div class="legend-box" style="background:#e6f4ea;border:2px solid #1e8c45"></div> Output Node (แสดงผล)</div>
+        <div class="legend-item"><div class="legend-box" style="background:#fffde7;border:2px solid #f9a825"></div> Decision (จุดตัดสินใจ)</div>
+        <div class="legend-item"><div class="legend-box" style="background:#fce4ec;border:2px solid #c62828"></div> Stop / Reject (สิ้นสุด)</div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <p>วิเคราะห์ระบบ: กรอบ IPO (Input–Process–Output) | ระบบขอเปิดหมู่เรียนพิเศษ</p>
+</footer>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      primaryColor: '#e8f0fe',
+      primaryTextColor: '#1a237e',
+      primaryBorderColor: '#1a73e8',
+      lineColor: '#555',
+      secondaryColor: '#fff3e0',
+      tertiaryColor: '#e6f4ea',
+      fontSize: '14px'
+    },
+    flowchart: {
+      curve: 'basis',
+      padding: 20
+    }
+  });
+</script>
+
+</body>
+</html>
