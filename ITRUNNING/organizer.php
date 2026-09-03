@@ -1,42 +1,63 @@
 <?php
-// ==========================================
-// 1. นำเข้าไฟล์เชื่อมต่อฐานข้อมูล และแถบเมนู
-// ==========================================
-require_once "db.php";
+/**
+ * ==========================================================
+ * ไฟล์: organizer.php
+ * คำอธิบาย: หน้าฟอร์มสำหรับผู้จัดงานและประชาสัมพันธ์งานวิ่ง
+ * ==========================================================
+ */
 
-// ==========================================
-// 2. ตรวจสอบการส่งฟอร์มของผู้จัดงาน (POST)
-// ==========================================
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $organizer_name   = trim($_POST['organizer_name']);
-    $organization     = trim($_POST['organization']);
-    $event_title      = trim($_POST['event_title']);
-    $expected_runners = (int)$_POST['expected_runners'];
-    $email            = trim($_POST['email']);
-    $phone            = trim($_POST['phone']);
-    $message          = trim($_POST['message']);
+require_once __DIR__ . '/config/db.php';
 
-    // บันทึกข้อมูลลงตาราง organizer_inquiries
-    $sql = "INSERT INTO organizer_inquiries (organizer_name, organization, event_title, expected_runners, email, phone, message)
-            VALUES (:name, :org, :title, :runners, :email, :phone, :msg)";
-    
-    $stmt = $conn->prepare($sql);
-    $stmt->execute([
-        ':name'    => $organizer_name,
-        ':org'     => $organization,
-        ':title'   => $event_title,
-        ':runners' => $expected_runners,
-        ':email'   => $email,
-        ':phone'   => $phone,
-        ':msg'     => $message
-    ]);
+// ตรวจสอบการส่งฟอร์มของผู้จัดงาน (POST)
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+    $organizer_name   = trim($_POST['organizer_name'] ?? '');
+    $organization     = trim($_POST['organization'] ?? '');
+    $event_title      = trim($_POST['event_title'] ?? '');
+    $expected_runners = (int)($_POST['expected_runners'] ?? 0);
+    $email            = trim($_POST['email'] ?? '');
+    $phone            = trim($_POST['phone'] ?? '');
+    $message          = trim($_POST['message'] ?? '');
 
-    $_SESSION['msg'] = "ส่งคำขอจัดงานเรียบร้อยแล้ว! ทีมงานจะติดต่อกลับโดยเร็วที่สุด";
+    try {
+        // ตรวจสอบหรือสร้างตาราง organizer_inquiries ถ้ายังไม่มี
+        $conn->exec("CREATE TABLE IF NOT EXISTS `organizer_inquiries` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `organizer_name` VARCHAR(150) NOT NULL,
+            `organization` VARCHAR(150) NULL,
+            `event_title` VARCHAR(255) NOT NULL,
+            `expected_runners` INT UNSIGNED NOT NULL DEFAULT 0,
+            `email` VARCHAR(150) NOT NULL,
+            `phone` VARCHAR(30) NOT NULL,
+            `message` TEXT NULL,
+            `status` ENUM('new', 'contacted', 'closed') NOT NULL DEFAULT 'new',
+            `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+
+        $sql = "INSERT INTO organizer_inquiries (organizer_name, organization, event_title, expected_runners, email, phone, message)
+                VALUES (:name, :org, :title, :runners, :email, :phone, :msg)";
+        
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([
+            ':name'    => $organizer_name,
+            ':org'     => $organization,
+            ':title'   => $event_title,
+            ':runners' => $expected_runners,
+            ':email'   => $email,
+            ':phone'   => $phone,
+            ':msg'     => $message
+        ]);
+
+        $_SESSION['msg'] = "ส่งคำขอจัดงานเรียบร้อยแล้ว! ทีมงานจะติดต่อกลับโดยเร็วที่สุด";
+    } catch (Exception $e) {
+        $_SESSION['error'] = "เกิดข้อผิดพลาดในการส่งข้อมูล: " . $e->getMessage();
+    }
+
     header("Location: organizer.php");
     exit;
 }
 
-require_once "navbar.php";
+$page_title = "สำหรับผู้จัดงานและประชาสัมพันธ์ (Organizer & PR)";
+require_once __DIR__ . '/includes/header.php';
 ?>
 
 <div class="max-w-5xl mx-auto px-4 py-8 space-y-10">
@@ -85,7 +106,7 @@ require_once "navbar.php";
                 </ul>
             </div>
 
-            <!-- บริการที่ 2: สื่อประชาสัมพันธ์และโปรโมตงานวิ่ง (หัวข้อย่อยประชาสัมพันธ์) -->
+            <!-- บริการที่ 2: สื่อประชาสัมพันธ์และโปรโมตงานวิ่ง -->
             <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-3">
                 <div class="w-12 h-12 rounded-2xl bg-lime-50 text-lime-700 flex items-center justify-center font-bold">
                     <i data-lucide="megaphone" class="w-6 h-6"></i>
@@ -202,4 +223,4 @@ require_once "navbar.php";
 
 </div>
 
-<?php require_once "footer.php"; ?>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

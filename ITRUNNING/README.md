@@ -1,90 +1,85 @@
-# 🏃 RunLan - ระบบเว็บวิ่ง (RunLan Web Application)
+# 🏃 IT วิ่งเข้าป่ามัน - แพลตฟอร์มงานวิ่งและเทรลธรรมชาติ (RunLan Platform)
 
-ระบบเว็บรับสมัครและปฏิทินงานวิ่ง (RunLan) พัฒนาด้วย **PHP 8 (Native PDO)**, **HTML5**, **TailwindCSS**, **FullCalendar JS** และ **MySQL** ออกแบบด้วย UI/UX ระดับพรีเมียม สไตล์ Glassmorphism สวยงาม ทันสมัย ใช้งานได้สมบูรณ์แบบบนทุกอุปกรณ์ (Mobile, Tablet, Desktop)
+ระบบเว็บรับสมัคร ปฏิทินงานวิ่ง และตรวจสอบผลการแข่งขัน (Web Application) พัฒนาด้วย **PHP 8 (Native PDO)**, **HTML5 / Vanilla JS**, **TailwindCSS**, **FullCalendar JS** และ **MySQL** ได้รับการจัดระเบียบโครงสร้างตามมาตรฐาน Web Development สากล (Clean Architecture) ปลอดภัย และดูแลรักษาง่าย
 
 ---
 
 ## 📁 โครงสร้างโปรเจกต์ (Project Structure)
 
 ```text
-RUNLAN/
-├── config/
-│   ├── db.php                  # การเชื่อมต่อฐานข้อมูล Native PDO (UTF8MB4, ERRMODE_EXCEPTION, FETCH_ASSOC)
-│   └── functions.php           # Helper Functions (XSS Sanitizer, วันที่ภาษาไทย, สุ่มรหัส Booking Code, Flash Alerts)
-├── includes/
-│   ├── header.php              # ส่วนหัว HTML, CDN TailwindCSS, ฟอนต์ Kanit, Lucide Icons
-│   ├── navbar.php              # แถบเมนูนำทางหลัก และช่องค้นหา E-Ticket ด่วน
-│   └── footer.php              # ส่วนท้ายเว็บ ลิงก์ และสคริปต์เสริม
-├── assets/
+ITRUNNING/
+├── config/                     # ⚙️ โฟลเดอร์ตั้งค่าระบบและการเชื่อมต่อฐานข้อมูล
+│   ├── app.php                 # ค่าคงที่ระบบ, Timezone, Session และ Path Definitions
+│   └── db.php                  # การเชื่อมต่อฐานข้อมูล Native PDO (UTF8MB4, ERRMODE_EXCEPTION)
+├── includes/                   # 🧩 โฟลเดอร์คอมโพเนนต์และฟังก์ชันส่วนกลาง
+│   ├── header.php              # โครงสร้าง <head>, Google Fonts (Prompt & Kanit), Tailwind Config, CSS CDN
+│   ├── navbar.php              # เมนูนำทาง (Desktop & Mobile Drawer) และช่องค้นหา E-Ticket ด่วน
+│   ├── footer.php              # ส่วนท้ายเว็บไซต์, โหลด JS และเปิดใช้งาน Lucide Icons
+│   └── functions.php           # Helper Functions (e() ป้องกัน XSS, วันที่ภาษาไทย, Format เงิน, Flash Alerts)
+├── api/                        # ⚡ โฟลเดอร์ Backend REST JSON API
+│   └── events.php              # API ส่งข้อมูล JSON งานวิ่งสำหรับ FullCalendar JS
+├── assets/                     # 🎨 ทรัพยากรและสไตล์ฝั่ง Client
 │   ├── css/
-│   │   └── custom.css          # Glassmorphism, Micro-animations, Print Styles สำหรับ E-Ticket
+│   │   └── custom.css          # สไตล์ Glassmorphism, Animations, Print Rules สำหรับ E-Ticket
 │   └── js/
-│       └── app.js              # สคริปต์ฝั่ง Client (Live Preview สลิป, Mobile Nav Drawer)
-├── uploads/
-│   └── slips/                  # จัดเก็บสลิปโอนเงิน (พร้อม .htaccess ป้องกันการรัน Script)
-├── schema.sql                  # สคริปต์สร้างฐานข้อมูล MySQL พร้อม Mock Data งานวิ่งไทยยอดนิยม 4 งาน
-├── index.php                   # หน้ารายการงานวิ่งที่เปิดรับสมัคร ดีไซน์เป็นการ์ด Responsive + ค้นหา/ฟิลเตอร์
-├── calendar.php                # หน้าปฏิทินงานวิ่ง Interactive ด้วย FullCalendar JS
-├── api_events.php              # Backend REST API ส่งข้อมูล JSON ให้ FullCalendar
-├── event-detail.php            # รายละเอียดงานวิ่ง, รางวัล, แผนที่จำลอง, สถิติยอดวิว (Auto Increment)
-├── register.php                # ฟอร์มสมัครวิ่ง, เลือกประเภท, ไซส์เสื้อ, พร้อมระบบคำนวณราคาและแนบสลิป
-├── process_register.php        # ประมวลผลสมัคร (DB Transaction, Check Quota, File Validation, Prevent SQL Injection)
-├── confirmation.php            # หน้ายืนยันการจอง บัตรจำลอง E-Ticket พร้อม QR Code และรองรับการพิมพ์
-└── README.md                   # เอกสารคู่มือการติดตั้งและการใช้งาน
+│       └── app.js              # สคริปต์จัดการ Live Preview รูปภาพ, Mobile Menu, Flash Alerts
+├── database/                   # 🗄️ ไฟล์ฐานข้อมูลและ Schema
+│   └── schema.sql              # สคริปต์สร้างฐานข้อมูล MySQL พร้อม Mock Data 16 งานวิ่ง + ผลการแข่งขัน
+├── uploads/                    # 📁 โฟลเดอร์จัดเก็บไฟล์อัปโหลดจากผู้ใช้
+│   ├── .htaccess               # 🔒 ป้องกันการ Execute สคริปต์ในโฟลเดอร์อัปโหลด
+│   ├── photos/                 # รูปถ่ายหน้าตรงนักวิ่งสำหรับพิมพ์ BIB
+│   └── slips/                  # สลิปหลักฐานการโอนเงิน
+├── index.php                   # [Page] หน้าหลัก ค้นหาและฟิลเตอร์รายการงานวิ่ง
+├── event-detail.php            # [Page] รายละเอียดงานวิ่ง หมวดหมู่ระยะทาง และของรางวัล
+├── register.php                # [Page] ฟอร์มสมัครวิ่ง คำนวณราคา และอัปโหลดหลักฐาน
+├── confirmation.php            # [Page] หน้าแสดงบัตร E-Ticket พร้อม QR Code และรองรับการพิมพ์
+├── calendar.php                # [Page] ปฏิทินงานวิ่ง Interactive (FullCalendar JS)
+├── results.php                 # [Page] ตรวจสอบผลการแข่งขันอย่างเป็นทางการ (Race Results & Leaderboard)
+├── organizer.php               # [Page] โซลูชันและฟอร์มติดต่อสำหรับผู้จัดงาน (Organizer & PR)
+├── contact.php                 # [Page] ติดต่อสอบถาม แจ้งปัญหา และ FAQ
+├── news.php                    # [Page] ข่าวสารประชาสัมพันธ์และเกร็ดความรู้สำหรับนักวิ่ง
+├── api_events.php              # [Shim] ตัวเชื่อมต่อเดิมสำหรับ Backward Compatibility
+└── README.md                   # เอกสารคู่มือโปรเจกต์ฉบับสมบูรณ์
 ```
 
 ---
 
 ## 🗄️ โครงสร้างฐานข้อมูล (Database Schema)
 
-ตารางหลัก 3 ตารางใน `schema.sql`:
+ตารางหลัก 5 ตารางใน `database/schema.sql`:
 
-1. **`events`**: ข้อมูลกิจกรรมงานวิ่ง
-   - `id`, `title`, `location`, `event_date`, `registration_end_date`, `categories`, `view_count`, `rewards_detail`, `banner_image`, `created_at`
-2. **`event_categories`**: หมวดหมู่และระยะทางของแต่ละงาน
-   - `id`, `event_id`, `category_name`, `price`, `max_slots`, `booked_slots`
-3. **`registrations`**: ข้อมูลการลงทะเบียนสมัครของนักวิ่ง
-   - `id`, `event_id`, `category_id`, `booking_code` (UNIQUE), `full_name`, `email`, `phone`, `shirt_size`, `slip_image`, `payment_status` (ENUM: 'pending', 'confirmed'), `registered_at`
-   - **`UNIQUE KEY (event_id, email)`**: ป้องกันการสมัครซ้ำด้วยอีเมลเดิมในงานเดียวกัน
+1. **`events`**: ข้อมูลกิจกรรมงานวิ่ง (ชื่องาน, สถานที่, วันเวลาแข่งขัน, วันปิดรับสมัคร, ยอดวิว, แบนเนอร์)
+2. **`event_categories`**: หมวดหมู่และระยะทางของแต่ละงาน (ชื่อรุ่น, ราคา, โควตารับสมัคร, ยอดจอง)
+3. **`registrations`**: ข้อมูลการลงทะเบียนสมัครของนักวิ่ง (Booking Code, ชื่อ, อีเมล, เบอร์โทร, ไซส์เสื้อ, รูปนักวิ่ง, สลิป)
+4. **`race_results`**: ผลการแข่งขัน (BIB, ชื่อน้องวิ่ง, Gun Time, Net Time, อันดับ Overall, Pace)
+5. **`contact_messages`**: ข้อความติดต่อและสอบถามจากหน้าเว็บ
 
 ---
 
 ## 🚀 ขั้นตอนการติดตั้งและรันโปรเจกต์ (Installation & Running)
 
 ### 1. นำเข้าฐานข้อมูล MySQL
-เปิดโปรแกรมจัดการฐานข้อมูล เช่น phpMyAdmin, MySQL Workbench หรือ Command Line แล้วรันคำสั่งจากไฟล์ `schema.sql`:
+นำเข้าไฟล์ `database/schema.sql` ใน phpMyAdmin หรือผ่าน Command Line:
 ```bash
-mysql -u root -p < schema.sql
+mysql -u root -p < database/schema.sql
 ```
-*(สคริปต์จะสร้างฐานข้อมูลชื่อ `runlan_db` พร้อมตารางและข้อมูล Mock Data ให้ทันที)*
 
 ### 2. ตั้งค่าการเชื่อมต่อฐานข้อมูล
-ตรวจสอบหรือแก้ไขข้อมูลเชื่อมต่อ MySQL ในไฟล์ [`config/db.php`](file:///config/db.php):
-```php
-$dbHost = getenv('DB_HOST') ?: '127.0.0.1';
-$dbPort = getenv('DB_PORT') ?: '3306';
-$dbName = getenv('DB_NAME') ?: 'runlan_db';
-$dbUser = getenv('DB_USER') ?: 'root';
-$dbPass = getenv('DB_PASS') !== false ? getenv('DB_PASS') : '';
-```
+ตรวจสอบหรือแก้ไขค่าในไฟล์ [`config/db.php`](file:///config/db.php) ให้ตรงกับเครื่องหรือโฮสติ้งของคุณ
 
-### 3. รันเซิร์ฟเวอร์ PHP Built-in Server
-เปิด Terminal ในโฟลเดอร์โปรเจกต์แล้วรันคำสั่ง:
-```bash
-php -S localhost:8000
-```
-จากนั้นเปิดเบราว์เซอร์ไปที่: **`http://localhost:8000`**
+### 3. รันเซิร์ฟเวอร์
+- **บน XAMPP / Apache**: เปิดโปรเจกต์ผ่าน `http://localhost/ITRUNNING/`
+- **บน PHP Built-in Server**:
+  ```bash
+  php -S localhost:8000
+  ```
+  จากนั้นเปิดเบราว์เซอร์ไปที่: `http://localhost:8000`
 
 ---
 
-## 🔒 มาตรการความปลอดภัยและ Best Practices
+## 🔒 ความปลอดภัยและมาตรฐานการพัฒนา (Best Practices)
 
-- ✅ **SQL Injection Prevention**: ใช้ Native PDO Prepared Statements 100%
-- ✅ **Database Transactions**: ใช้ `beginTransaction()`, `commit()`, `rollBack()` ร่วมกับ `SELECT ... FOR UPDATE` ป้องกันข้อผิดพลาดในการตัดโควตาซ้ำซ้อน (Overbooking Race Condition)
-- ✅ **File Upload Security**:
-  - ตรวจสอบ MIME Type จริงผ่าน `finfo_file` (เฉพาะ `image/jpeg`, `image/png`, `image/webp`)
-  - ตรวจสอบนามสกุลและจำกัดขนาดไฟล์ไม่เกิน 2MB
-  - สุ่มชื่อไฟล์ใหม่ด้วย `bin2hex(random_bytes(16))` ป้องกัน Path Traversal
-  - มี `.htaccess` ในโฟลเดอร์ `uploads/slips/` เพื่อบล็อกการรันสคริปต์
-- ✅ **XSS Protection**: เข้ารหัส HTML Entities ทุกจุดที่แสดงผลด้วยฟังก์ชัน `e()`
-- ✅ **Clean Code**: โค้ดมีการแยก Layer ชัดเจนและมีคอมเมนต์ภาษาไทยอธิบายทุกฟังก์ชัน
+- 🛡️ **SQL Injection Prevention**: ใช้ Native PDO Prepared Statements 100% ในทุกส่วนของระบบ
+- 🛡️ **XSS Attack Defense**: เข้ารหัส HTML Output ปลอดภัยด้วยฟังก์ชัน `e()` ใน `includes/functions.php`
+- 🛡️ **File Upload Security**: ตรวจสอบนามสกุลไฟล์ที่อนุญาต สุ่มสร้างชื่อไฟล์ และบล็อกการรันสคริปต์ด้วย `.htaccess`
+- 🛡️ **Responsive & Clean UI**: รองรับทุกหน้าจอด้วย Tailwind CSS, Google Fonts และ Glassmorphism Design

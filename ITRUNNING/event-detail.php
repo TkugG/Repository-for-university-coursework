@@ -1,25 +1,34 @@
 <?php
-// ==========================================
-// 1. นำเข้าไฟล์เชื่อมต่อฐานข้อมูล และแถบเมนู
-// ==========================================
-require_once "db.php";
-require_once "navbar.php";
+/**
+ * ==========================================================
+ * ไฟล์: event-detail.php
+ * คำอธิบาย: หน้ารายละเอียดงานวิ่ง หมวดหมู่ระยะทาง และสถิติ
+ * ==========================================================
+ */
 
-// ==========================================
-// 2. รับรหัสงานวิ่ง (id) จาก URL
-// ==========================================
+require_once __DIR__ . '/config/db.php';
+
+// รับรหัสงานวิ่ง (id) จาก URL
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
-// 3. เพิ่มยอดวิวของงานนี้ (+1)
-$conn->query("UPDATE events SET view_count = view_count + 1 WHERE id = $id");
+if ($id <= 0) {
+    header("Location: index.php");
+    exit;
+}
 
-// 4. ดึงข้อมูลงานวิ่งจากตาราง events
-$stmt = $conn->query("SELECT * FROM events WHERE id = $id");
+// เพิ่มยอดวิวของงานนี้ (+1) ด้วย Prepared Statement
+$view_stmt = $conn->prepare("UPDATE events SET view_count = view_count + 1 WHERE id = :id");
+$view_stmt->execute([':id' => $id]);
+
+// ดึงข้อมูลงานวิ่งจากตาราง events
+$stmt = $conn->prepare("SELECT * FROM events WHERE id = :id");
+$stmt->execute([':id' => $id]);
 $event = $stmt->fetch();
 
 // ถ้าไม่พบข้อมูลให้กลับหน้าแรก
 if (!$event) {
-    echo "<script>alert('ไม่พบข้อมูลงานวิ่งนี้'); window.location='index.php';</script>";
+    $_SESSION['error'] = 'ไม่พบข้อมูลงานวิ่งที่ระบุ';
+    header("Location: index.php");
     exit;
 }
 
@@ -27,10 +36,11 @@ if (!$event) {
 $now = date('Y-m-d H:i:s');
 $today = date('Y-m-d');
 $is_event_ended = ($today > $event['race_date']);
-$is_reg_closed = ($now > $event['registration_end_date']) || $is_event_ended;
+$is_reg_closed  = ($now > $event['registration_end_date']) || $is_event_ended;
 
-// 5. ดึงหมวดหมู่ระยะทางและราคาค่าสมัคร
-$cat_stmt = $conn->query("SELECT * FROM event_categories WHERE event_id = $id ORDER BY price DESC");
+// ดึงหมวดหมู่ระยะทางและราคาค่าสมัคร
+$cat_stmt = $conn->prepare("SELECT * FROM event_categories WHERE event_id = :id ORDER BY price DESC");
+$cat_stmt->execute([':id' => $id]);
 $categories = $cat_stmt->fetchAll();
 
 // ตรวจสอบว่าที่นั่งเต็มหมดแล้วหรือไม่
@@ -41,7 +51,10 @@ foreach ($categories as $cat) {
     $total_booked += $cat['booked_slots'];
 }
 $is_slots_full = ($total_max > 0 && $total_booked >= $total_max);
-$can_register = !$is_reg_closed && !$is_slots_full;
+$can_register  = !$is_reg_closed && !$is_slots_full;
+
+$page_title = $event['title'] . " - รายละเอียดงานวิ่ง";
+require_once __DIR__ . '/includes/header.php';
 ?>
 
 <!-- หน้ารายละเอียดงานวิ่ง (Event Detail) -->
@@ -55,14 +68,14 @@ $can_register = !$is_reg_closed && !$is_slots_full;
         
         <!-- รูปภาพงานวิ่ง Aspect Ratio 16:9 บนมือถือ และ 21:9 บนจอใหญ่ -->
         <div class="w-full aspect-[16/9] sm:aspect-[21/9] relative bg-slate-900 overflow-hidden">
-            <img src="<?= htmlspecialchars($event['banner_image']) ?>" 
-                 alt="<?= htmlspecialchars($event['title']) ?>" 
+            <img src="<?= e($event['banner_image']) ?>" 
+                 alt="<?= e($event['title']) ?>" 
                  class="w-full h-full object-cover opacity-85">
             
             <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent flex flex-col justify-end p-6 sm:p-10 text-white">
                 <div class="flex items-center gap-2">
                     <span class="px-3.5 py-1 rounded-full text-xs font-bold bg-brand-600 shadow">
-                        <?= htmlspecialchars($event['category_type']) ?>
+                        <?= e($event['category_type']) ?>
                     </span>
                     <?php if ($is_event_ended): ?>
                         <span class="px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-200 border border-slate-600 shadow">
@@ -80,10 +93,10 @@ $can_register = !$is_reg_closed && !$is_slots_full;
                 </div>
 
                 <h1 class="text-2xl sm:text-4xl lg:text-5xl font-black mt-2 leading-tight">
-                    <?= htmlspecialchars($event['title']) ?>
+                    <?= e($event['title']) ?>
                 </h1>
                 <p class="text-xs sm:text-sm text-slate-200 flex items-center gap-1.5 mt-2">
-                    <i data-lucide="map-pin" class="w-4 h-4 text-lime-400"></i> <?= htmlspecialchars($event['location']) ?>
+                    <i data-lucide="map-pin" class="w-4 h-4 text-lime-400"></i> <?= e($event['location']) ?>
                 </p>
             </div>
         </div>
@@ -98,7 +111,7 @@ $can_register = !$is_reg_closed && !$is_slots_full;
                     </div>
                     <div>
                         <span class="text-slate-400 block text-[11px] font-medium">วันแข่งขัน</span>
-                        <strong class="text-slate-800 text-sm font-bold"><?= $event['race_date'] ?></strong>
+                        <strong class="text-slate-800 text-sm font-bold"><?= thai_date($event['race_date']) ?></strong>
                     </div>
                 </div>
 
@@ -118,7 +131,7 @@ $can_register = !$is_reg_closed && !$is_slots_full;
                     </div>
                     <div>
                         <span class="text-slate-400 block text-[11px] font-medium">ปิดรับสมัคร</span>
-                        <strong class="text-slate-800 text-sm font-bold"><?= $event['registration_end_date'] ?></strong>
+                        <strong class="text-slate-800 text-sm font-bold"><?= thai_date($event['registration_end_date'], true) ?></strong>
                     </div>
                 </div>
 
@@ -128,7 +141,7 @@ $can_register = !$is_reg_closed && !$is_slots_full;
                     </div>
                     <div>
                         <span class="text-slate-400 block text-[11px] font-medium">ยอดผู้เข้าชม</span>
-                        <strong class="text-amber-700 text-sm font-bold"><?= number_format($event['view_count']) ?> ครั้ง</strong>
+                        <strong class="text-amber-700 text-sm font-bold"><?= number_format((int)$event['view_count']) ?> ครั้ง</strong>
                     </div>
                 </div>
             </div>
@@ -143,11 +156,11 @@ $can_register = !$is_reg_closed && !$is_slots_full;
                     <?php foreach ($categories as $cat): ?>
                         <div class="p-5 rounded-2xl border border-slate-200 bg-white hover:border-brand-300 transition-colors flex justify-between items-center shadow-sm">
                             <div class="space-y-1">
-                                <h4 class="font-bold text-sm sm:text-base text-slate-900"><?= htmlspecialchars($cat['category_name']) ?></h4>
+                                <h4 class="font-bold text-sm sm:text-base text-slate-900"><?= e($cat['category_name']) ?></h4>
                                 <span class="text-xs text-slate-500 block">โควตา: <?= $cat['booked_slots'] ?> / <?= $cat['max_slots'] ?> ที่นั่ง</span>
                             </div>
                             <div class="text-right">
-                                <span class="text-lg sm:text-xl font-black text-brand-600">฿<?= number_format($cat['price'], 2) ?></span>
+                                <span class="text-lg sm:text-xl font-black text-brand-600"><?= format_baht($cat['price']) ?></span>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -160,7 +173,7 @@ $can_register = !$is_reg_closed && !$is_slots_full;
                     <i data-lucide="award" class="w-5 h-5 text-amber-500"></i> ของรางวัลและสิทธิประโยชน์ที่ได้รับ
                 </h3>
                 <div class="bg-amber-50/60 p-6 rounded-3xl border border-amber-200/60 text-xs sm:text-sm text-slate-700 whitespace-pre-line leading-relaxed shadow-sm">
-                    <?= htmlspecialchars($event['rewards_detail']) ?>
+                    <?= e($event['rewards_detail']) ?>
                 </div>
             </div>
 
@@ -189,4 +202,4 @@ $can_register = !$is_reg_closed && !$is_slots_full;
     </div>
 </div>
 
-<?php require_once "footer.php"; ?>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

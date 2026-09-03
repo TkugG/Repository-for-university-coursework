@@ -1,24 +1,22 @@
 <?php
-// ==========================================
-// 1. นำเข้าไฟล์เชื่อมต่อฐานข้อมูล และแถบเมนู
-// ==========================================
-require_once "db.php";
-require_once "navbar.php";
+/**
+ * ==========================================================
+ * ไฟล์: index.php
+ * คำอธิบาย: หน้ารายการงานวิ่งทั้งหมด พร้อมระบบค้นหาและตัวกรอง
+ * ==========================================================
+ */
 
-// ==========================================
-// 2. รับค่าค้นหาและตัวกรองจากฟอร์ม (ถ้ามี)
-// ==========================================
-$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+require_once __DIR__ . '/config/db.php';
+
+// รับค่าค้นหาและตัวกรองจากแบบฟอร์ม
+$search   = isset($_GET['search']) ? trim($_GET['search']) : '';
 $category = isset($_GET['category']) ? trim($_GET['category']) : '';
-$status_filter = isset($_GET['status']) ? trim($_GET['status']) : 'all';
 
 // วันที่และเวลาปัจจุบันสำหรับเปรียบเทียบ
-$now = date('Y-m-d H:i:s');
+$now   = date('Y-m-d H:i:s');
 $today = date('Y-m-d');
 
-// ==========================================
-// 3. เขียนคำสั่ง SQL เพื่อดึงข้อมูลงานวิ่ง พร้อมโควตารวม
-// ==========================================
+// สร้างคำสั่ง SQL และ Binding Parameters
 $sql = "SELECT e.*, 
                COALESCE(SUM(c.max_slots), 0) AS total_max, 
                COALESCE(SUM(c.booked_slots), 0) AS total_booked,
@@ -27,19 +25,28 @@ $sql = "SELECT e.*,
         LEFT JOIN event_categories c ON e.id = c.event_id
         WHERE 1=1";
 
-if ($search != '') {
-    $sql .= " AND (e.title LIKE '%$search%' OR e.location LIKE '%$search%')";
+$params = [];
+
+if ($search !== '') {
+    $sql .= " AND (e.title LIKE :search1 OR e.location LIKE :search2)";
+    $params[':search1'] = "%$search%";
+    $params[':search2'] = "%$search%";
 }
 
-if ($category != '') {
-    $sql .= " AND (e.category_type LIKE '%$category%' OR e.categories LIKE '%$category%')";
+if ($category !== '') {
+    $sql .= " AND (e.category_type LIKE :cat1 OR e.categories LIKE :cat2)";
+    $params[':cat1'] = "%$category%";
+    $params[':cat2'] = "%$category%";
 }
 
 $sql .= " GROUP BY e.id ORDER BY e.race_date ASC";
 
-// 4. สั่งรันคำสั่ง SQL ดึงข้อมูล
-$stmt = $conn->query($sql);
+$stmt = $conn->prepare($sql);
+$stmt->execute($params);
 $events = $stmt->fetchAll();
+
+$page_title = "หน้าหลัก - งานวิ่งและเทรลธรรมชาติ 2026";
+require_once __DIR__ . '/includes/header.php';
 ?>
 
 <!-- ส่วนแบนเนอร์ด้านบน (Hero Section) -->
@@ -64,7 +71,7 @@ $events = $stmt->fetchAll();
             
             <!-- ช่องค้นหาชื่อหรือสถานที่ -->
             <div class="sm:col-span-6 relative">
-                <input type="text" name="search" value="<?= htmlspecialchars($search) ?>" 
+                <input type="text" name="search" value="<?= e($search) ?>" 
                        placeholder="พิมพ์ชื่องานวิ่ง หรือ จังหวัด/สถานที่ เช่น เขาใหญ่, บางแสน..." 
                        class="w-full pl-10 pr-4 py-3 text-sm bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all">
                 <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></i>
@@ -87,7 +94,7 @@ $events = $stmt->fetchAll();
                 <button type="submit" class="flex-1 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl font-bold text-sm shadow-md shadow-brand-500/20 transition-all flex items-center justify-center gap-1.5">
                     <i data-lucide="filter" class="w-4 h-4"></i> ค้นหา
                 </button>
-                <?php if ($search != '' || $category != ''): ?>
+                <?php if ($search !== '' || $category !== ''): ?>
                     <a href="index.php" class="p-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl transition-colors" title="ล้างตัวกรอง">
                         <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
                     </a>
@@ -135,22 +142,22 @@ $events = $stmt->fetchAll();
                 <?php
                     // ตรวจสอบสถานะวันรับสมัครและวันแข่งขันจริง
                     $is_event_ended = ($today > $row['race_date']);
-                    $is_reg_closed = ($now > $row['registration_end_date']) || $is_event_ended;
-                    $is_slots_full = ($row['total_max'] > 0 && $row['total_booked'] >= $row['total_max']);
-                    $can_register = !$is_reg_closed && !$is_slots_full;
+                    $is_reg_closed  = ($now > $row['registration_end_date']) || $is_event_ended;
+                    $is_slots_full  = ($row['total_max'] > 0 && $row['total_booked'] >= $row['total_max']);
+                    $can_register   = !$is_reg_closed && !$is_slots_full;
                 ?>
                 <div class="bg-white rounded-3xl overflow-hidden border border-slate-200/80 shadow-sm hover:shadow-xl hover:border-brand-300 transform hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group">
                     
                     <div>
                         <!-- รูปแบนเนอร์งาน (Aspect Ratio 16:9) -->
                         <div class="w-full aspect-[16/9] relative overflow-hidden bg-slate-100">
-                            <img src="<?= htmlspecialchars($row['banner_image']) ?>" 
-                                 alt="<?= htmlspecialchars($row['title']) ?>" 
+                            <img src="<?= e($row['banner_image']) ?>" 
+                                 alt="<?= e($row['title']) ?>" 
                                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                             
                             <div class="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/20 to-transparent"></div>
                             
-                            <!-- ป้ายสถานะการรับสมัคร (Badge 3 ระดับ) -->
+                            <!-- ป้ายสถานะการรับสมัคร -->
                             <div class="absolute top-3 left-3">
                                 <?php if ($is_event_ended): ?>
                                     <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-200 border border-slate-600 shadow flex items-center gap-1">
@@ -170,14 +177,14 @@ $events = $stmt->fetchAll();
                             <!-- ยอดวิว -->
                             <span class="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-900/80 text-white backdrop-blur-sm flex items-center gap-1">
                                 <i data-lucide="eye" class="w-3 h-3 text-amber-400"></i>
-                                <?= number_format($row['view_count']) ?>
+                                <?= number_format((int)$row['view_count']) ?>
                             </span>
 
                             <!-- วันที่จัดงานลอยด้านล่างภาพ -->
                             <div class="absolute bottom-3 left-3 right-3 text-white flex items-center justify-between text-xs">
                                 <span class="font-bold flex items-center gap-1">
                                     <i data-lucide="calendar" class="w-3.5 h-3.5 text-lime-400"></i>
-                                    <?= $row['race_date'] ?>
+                                    <?= thai_date($row['race_date']) ?>
                                 </span>
                                 <span class="text-lime-300 font-semibold">
                                     ปล่อยตัว <?= substr($row['race_time'], 0, 5) ?> น.
@@ -189,29 +196,29 @@ $events = $stmt->fetchAll();
                         <div class="p-5 sm:p-6 space-y-3">
                             <div class="flex items-center gap-2">
                                 <span class="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-brand-50 text-brand-800 border border-brand-200">
-                                    <?= htmlspecialchars($row['category_type']) ?>
+                                    <?= e($row['category_type']) ?>
                                 </span>
                                 <?php if ($row['min_price'] > 0): ?>
                                     <span class="text-xs font-bold text-slate-500">
-                                        เริ่มต้น ฿<?= number_format($row['min_price'], 2) ?>
+                                        เริ่มต้น <?= format_baht($row['min_price']) ?>
                                     </span>
                                 <?php endif; ?>
                             </div>
 
                             <h3 class="font-bold text-base sm:text-lg text-slate-900 group-hover:text-brand-600 transition-colors line-clamp-1">
                                 <a href="event-detail.php?id=<?= $row['id'] ?>">
-                                    <?= htmlspecialchars($row['title']) ?>
+                                    <?= e($row['title']) ?>
                                 </a>
                             </h3>
                             
                             <p class="text-xs text-slate-500 flex items-center gap-1.5 line-clamp-1">
                                 <i data-lucide="map-pin" class="w-4 h-4 text-brand-500 flex-shrink-0"></i>
-                                <?= htmlspecialchars($row['location']) ?>
+                                <?= e($row['location']) ?>
                             </p>
 
                             <!-- วันปิดรับสมัคร -->
                             <div class="text-[11px] text-slate-400">
-                                ⏳ ปิดรับสมัคร: <?= $row['registration_end_date'] ?>
+                                ⏳ ปิดรับสมัคร: <?= thai_date($row['registration_end_date'], true) ?>
                             </div>
                         </div>
                     </div>
@@ -246,4 +253,4 @@ $events = $stmt->fetchAll();
     <?php endif; ?>
 </div>
 
-<?php require_once "footer.php"; ?>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

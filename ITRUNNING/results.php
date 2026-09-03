@@ -1,37 +1,47 @@
 <?php
-// ==========================================
-// 1. นำเข้าไฟล์เชื่อมต่อฐานข้อมูล และแถบเมนู
-// ==========================================
-require_once "db.php";
-require_once "navbar.php";
+/**
+ * ==========================================================
+ * ไฟล์: results.php
+ * คำอธิบาย: หน้าค้นหาและแสดงผลการแข่งขันวิ่ง (Race Results & Leaderboard)
+ * ==========================================================
+ */
 
-// ==========================================
-// 2. รับค่าค้นหาหมายเลข BIB หรือชื่อนักวิ่ง
-// ==========================================
-$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+require_once __DIR__ . '/config/db.php';
+
+// รับค่าค้นหาหมายเลข BIB หรือชื่อนักวิ่ง
+$search   = isset($_GET['search']) ? trim($_GET['search']) : '';
 $event_id = isset($_GET['event_id']) ? (int)$_GET['event_id'] : 0;
 
 // ดึงรายชื่องานวิ่งสำหรับ Dropdown
 $events_list = $conn->query("SELECT id, title FROM events ORDER BY race_date DESC")->fetchAll();
 
-// 3. เขียนคำสั่ง SQL ค้นหาผลการแข่งขัน
+// เขียนคำสั่ง SQL ค้นหาผลการแข่งขันด้วย Prepared Statement
 $sql = "SELECT r.*, e.title AS event_title 
         FROM race_results r 
         JOIN events e ON r.event_id = e.id 
         WHERE 1=1";
 
-if ($search != '') {
-    $sql .= " AND (r.bib_number LIKE '%$search%' OR r.runner_name LIKE '%$search%')";
+$params = [];
+
+if ($search !== '') {
+    $sql .= " AND (r.bib_number LIKE :search1 OR r.runner_name LIKE :search2)";
+    $params[':search1'] = "%$search%";
+    $params[':search2'] = "%$search%";
 }
 
 if ($event_id > 0) {
-    $sql .= " AND r.event_id = $event_id";
+    $sql .= " AND r.event_id = :event_id";
+    $params[':event_id'] = $event_id;
 }
 
 $sql .= " ORDER BY r.overall_rank ASC LIMIT 100";
 
-$stmt = $conn->query($sql);
+$stmt = $conn->prepare($sql);
+$stmt->execute($params);
 $results = $stmt->fetchAll();
+
+$page_title = "ผลการแข่งขันอย่างเป็นทางการ (Race Results)";
+require_once __DIR__ . '/includes/header.php';
 ?>
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
@@ -61,7 +71,7 @@ $results = $stmt->fetchAll();
                         <option value="0">-- ทุกรายการงานวิ่ง --</option>
                         <?php foreach ($events_list as $ev): ?>
                             <option value="<?= $ev['id'] ?>" <?= $event_id == $ev['id'] ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($ev['title']) ?>
+                                <?= e($ev['title']) ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
@@ -71,7 +81,7 @@ $results = $stmt->fetchAll();
                 <div class="sm:col-span-5">
                     <label class="block text-xs font-bold text-slate-600 mb-1">หมายเลข BIB หรือชื่อนักวิ่ง</label>
                     <div class="relative">
-                        <input type="text" name="search" value="<?= htmlspecialchars($search) ?>" 
+                        <input type="text" name="search" value="<?= e($search) ?>" 
                                placeholder="เช่น A21-1001 หรือ ณัฐวุฒิ" 
                                class="w-full pl-9 pr-3 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500">
                         <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
@@ -83,7 +93,7 @@ $results = $stmt->fetchAll();
                     <button type="submit" class="flex-1 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow transition-colors flex items-center justify-center gap-1">
                         <i data-lucide="search" class="w-3.5 h-3.5"></i> ค้นหา
                     </button>
-                    <?php if ($search != '' || $event_id > 0): ?>
+                    <?php if ($search !== '' || $event_id > 0): ?>
                         <a href="results.php" class="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-colors" title="ล้างการค้นหา">
                             <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
                         </a>
@@ -94,7 +104,7 @@ $results = $stmt->fetchAll();
         </div>
     </div>
 
-    <!-- ตารางแสดงผลการแข่งขันแบบ Responsive (Overflow-x-auto ไม่ดันหน้าเว็บล้น) -->
+    <!-- ตารางแสดงผลการแข่งขันแบบ Responsive -->
     <div class="bg-white rounded-3xl border border-slate-200 shadow-md overflow-hidden">
         
         <div class="p-4 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 bg-slate-50/50">
@@ -105,7 +115,7 @@ $results = $stmt->fetchAll();
             <span class="text-[11px] text-slate-500 font-medium">⚡ ผลเวลาอัปเดตแบบเรียลไทม์</span>
         </div>
 
-        <?php if (count($results) == 0): ?>
+        <?php if (count($results) === 0): ?>
             <div class="p-12 text-center text-slate-400 space-y-3">
                 <i data-lucide="search-x" class="w-12 h-12 mx-auto text-slate-300"></i>
                 <p class="text-sm font-semibold text-slate-600">ไม่พบข้อมูลผลการแข่งขันที่ตรงกับคำค้นหา</p>
@@ -144,38 +154,38 @@ $results = $stmt->fetchAll();
 
                                 <!-- BIB Number -->
                                 <td class="py-3.5 px-4 font-mono font-black text-brand-700 text-sm">
-                                    <?= htmlspecialchars($row['bib_number']) ?>
+                                    <?= e($row['bib_number']) ?>
                                 </td>
 
                                 <!-- Runner Name -->
                                 <td class="py-3.5 px-4">
-                                    <div class="font-bold text-slate-900"><?= htmlspecialchars($row['runner_name']) ?></div>
+                                    <div class="font-bold text-slate-900"><?= e($row['runner_name']) ?></div>
                                     <div class="text-[10px] text-slate-400">
-                                        <?= $row['gender'] == 'M' ? 'ชาย' : 'หญิง' ?> • <?= htmlspecialchars($row['age_group']) ?>
+                                        <?= $row['gender'] == 'M' ? 'ชาย' : 'หญิง' ?> • <?= e($row['age_group']) ?>
                                     </div>
                                 </td>
 
                                 <!-- Event Title & Category -->
                                 <td class="py-3.5 px-4">
-                                    <div class="text-slate-700 font-medium max-w-xs truncate"><?= htmlspecialchars($row['event_title']) ?></div>
+                                    <div class="text-slate-700 font-medium max-w-xs truncate"><?= e($row['event_title']) ?></div>
                                     <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-brand-50 text-brand-800 border border-brand-200 mt-0.5">
-                                        <?= htmlspecialchars($row['category_name']) ?>
+                                        <?= e($row['category_name']) ?>
                                     </span>
                                 </td>
 
                                 <!-- Net Time -->
                                 <td class="py-3.5 px-4 font-mono font-extrabold text-emerald-700 text-sm">
-                                    <?= htmlspecialchars($row['net_time']) ?>
+                                    <?= e($row['net_time']) ?>
                                 </td>
 
                                 <!-- Gun Time -->
                                 <td class="py-3.5 px-4 font-mono text-slate-500">
-                                    <?= htmlspecialchars($row['gun_time']) ?>
+                                    <?= e($row['gun_time']) ?>
                                 </td>
 
                                 <!-- Pace -->
                                 <td class="py-3.5 px-4 font-semibold text-slate-700">
-                                    <?= htmlspecialchars($row['avg_pace']) ?>
+                                    <?= e($row['avg_pace']) ?>
                                 </td>
 
                             </tr>
@@ -189,4 +199,4 @@ $results = $stmt->fetchAll();
 
 </div>
 
-<?php require_once "footer.php"; ?>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

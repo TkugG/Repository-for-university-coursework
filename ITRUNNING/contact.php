@@ -1,46 +1,57 @@
 <?php
-// ==========================================
-// 1. นำเข้าไฟล์เชื่อมต่อฐานข้อมูล และแถบเมนู
-// ==========================================
-require_once "db.php";
+/**
+ * ==========================================================
+ * ไฟล์: contact.php
+ * คำอธิบาย: หน้าติดต่อเราและส่งข้อความถึงทีมงาน
+ * ==========================================================
+ */
 
-// ==========================================
-// 2. ตรวจสอบการส่งข้อความติดต่อ (POST)
-// ==========================================
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $name    = trim($_POST['name']);
-    $email   = trim($_POST['email']);
-    $phone   = trim($_POST['phone']);
-    $subject = trim($_POST['subject']);
-    $message = trim($_POST['message']);
+require_once __DIR__ . '/config/db.php';
 
-    // บันทึกข้อมูลลงตาราง contact_messages
-    $sql = "INSERT INTO contact_messages (name, email, phone, subject, message) 
-            VALUES (:name, :email, :phone, :subject, :msg)";
-    
-    $stmt = $conn->prepare($sql);
-    $stmt->execute([
-        ':name'    => $name,
-        ':email'   => $email,
-        ':phone'   => $phone,
-        ':subject' => $subject,
-        ':msg'     => $message
-    ]);
+// ตรวจสอบการส่งข้อความติดต่อ (POST)
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+    $name    = trim($_POST['name'] ?? '');
+    $email   = trim($_POST['email'] ?? '');
+    $phone   = trim($_POST['phone'] ?? '');
+    $subject = trim($_POST['subject'] ?? 'สอบถามข้อมูลทั่วไป');
+    $message = trim($_POST['message'] ?? '');
 
-    $_SESSION['msg'] = "ส่งข้อความติดต่อเรียบร้อยแล้ว! เจ้าหน้าที่จะติดต่อกลับโดยเร็วที่สุด";
+    try {
+        // บันทึกข้อมูลลงตาราง contact_messages
+        $sql = "INSERT INTO contact_messages (name, email, phone, subject, message) 
+                VALUES (:name, :email, :phone, :subject, :msg)";
+        
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([
+            ':name'    => $name,
+            ':email'   => $email,
+            ':phone'   => $phone,
+            ':subject' => $subject,
+            ':msg'     => $message
+        ]);
+
+        $_SESSION['msg'] = "ส่งข้อความติดต่อเรียบร้อยแล้ว! เจ้าหน้าที่จะติดต่อกลับโดยเร็วที่สุด";
+    } catch (Exception $e) {
+        $_SESSION['error'] = "เกิดข้อผิดพลาดในการส่งข้อความ: " . $e->getMessage();
+    }
+
     header("Location: contact.php");
     exit;
 }
 
-require_once "navbar.php";
+$page_title = "ติดต่อเรา (Contact Us)";
+require_once __DIR__ . '/includes/header.php';
 ?>
 
 <div class="max-w-4xl mx-auto px-4 py-8 space-y-8">
     
     <!-- หัวข้อหน้า -->
     <div class="text-center space-y-2">
+        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-sky-50 text-sky-700 text-xs sm:text-sm font-bold border border-sky-200">
+            <i data-lucide="headset" class="w-4 h-4 text-sky-500"></i> Get In Touch
+        </div>
         <h1 class="text-2xl sm:text-4xl font-extrabold text-slate-900 flex items-center justify-center gap-2">
-            <i data-lucide="headset" class="w-8 h-8 text-sky-500"></i> ติดต่อเรา (Contact Us)
+            ติดต่อเรา (Contact Us)
         </h1>
         <p class="text-xs sm:text-sm text-slate-500">สอบถามข้อมูลการสมัคร แจ้งปัญหาชำระเงิน หรือปรึกษาการจัดงาน</p>
     </div>
@@ -81,24 +92,24 @@ require_once "navbar.php";
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">ชื่อ-นามสกุล <span class="text-rose-500">*</span></label>
                     <input type="text" name="name" required placeholder="เช่น นายสมชาย ใจดี" 
-                           class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl">
+                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500">
                 </div>
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">เบอร์โทรศัพท์ <span class="text-rose-500">*</span></label>
                     <input type="tel" name="phone" required placeholder="08XXXXXXXX" 
-                           class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl">
+                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500">
                 </div>
             </div>
 
             <div>
                 <label class="block font-bold text-slate-700 mb-1">อีเมลติดต่อ <span class="text-rose-500">*</span></label>
                 <input type="email" name="email" required placeholder="runner@example.com" 
-                       class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl">
+                       class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500">
             </div>
 
             <div>
                 <label class="block font-bold text-slate-700 mb-1">หัวข้อเรื่อง</label>
-                <select name="subject" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl">
+                <select name="subject" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500">
                     <option value="สอบถามเรื่องการสมัครและรับบัตร E-Ticket">สอบถามเรื่องการสมัครและรับบัตร E-Ticket</option>
                     <option value="แจ้งปัญหาการชำระเงินและสลิป">แจ้งปัญหาการชำระเงินและสลิป</option>
                     <option value="ขอเปลี่ยนไซส์เสื้อวิ่ง">ขอเปลี่ยนไซส์เสื้อวิ่ง</option>
@@ -110,10 +121,11 @@ require_once "navbar.php";
             <div>
                 <label class="block font-bold text-slate-700 mb-1">ข้อความรายละเอียด <span class="text-rose-500">*</span></label>
                 <textarea name="message" rows="3" required placeholder="พิมพ์ข้อความที่ต้องการติดต่อ..." 
-                          class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl"></textarea>
+                          class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
             </div>
 
-            <button type="submit" class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl shadow transition-colors">
+            <button type="submit" class="w-full py-3.5 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-2xl shadow-md transition-colors flex items-center justify-center gap-2">
+                <i data-lucide="send" class="w-4 h-4"></i>
                 ส่งข้อความ
             </button>
         </form>
@@ -141,4 +153,4 @@ require_once "navbar.php";
 
 </div>
 
-<?php require_once "footer.php"; ?>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

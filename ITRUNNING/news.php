@@ -1,10 +1,11 @@
 <?php
-// ==========================================
-// 1. นำเข้าแถบเมนู
-// ==========================================
-require_once "navbar.php";
+/**
+ * ==========================================================
+ * ไฟล์: news.php
+ * คำอธิบาย: รวมข่าวสารงานวิ่ง ประกาศรับ BIB และเกร็ดความรู้
+ * ==========================================================
+ */
 
-// 2. ข้อมูลข่าวสารประชาสัมพันธ์ (Array Mock Data)
 $news = [
     [
         'title' => 'คู่มือเตรียมตัววิ่งเทรลครั้งแรก: อุปกรณ์ที่ขาดไม่ได้และการฝึกซ้อมในป่า',
@@ -35,14 +36,20 @@ $news = [
         'img' => 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?auto=format&fit=crop&w=800&q=80'
     ]
 ];
+
+$page_title = "ข่าวสารและประชาสัมพันธ์ (News & PR)";
+require_once __DIR__ . '/includes/header.php';
 ?>
 
-<div class="max-w-7xl mx-auto px-4 py-8">
+<div class="max-w-7xl mx-auto px-4 py-8 sm:py-12">
     
     <!-- หัวข้อหน้า -->
-    <div class="text-center space-y-2 mb-8">
+    <div class="text-center space-y-2 mb-10">
+        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-50 text-brand-700 text-xs sm:text-sm font-bold border border-brand-200">
+            <i data-lucide="newspaper" class="w-4 h-4 text-brand-600"></i> Articles & Announcements
+        </div>
         <h1 class="text-2xl sm:text-4xl font-extrabold text-slate-900 flex items-center justify-center gap-2">
-            <i data-lucide="newspaper" class="w-8 h-8 text-brand-600"></i> ข่าวสารและประชาสัมพันธ์ (News & PR)
+            ข่าวสารและประชาสัมพันธ์งานวิ่ง
         </h1>
         <p class="text-xs sm:text-sm text-slate-500">รวมข่าวสารงานวิ่ง ประกาศรับ BIB และเกร็ดความรู้สำหรับนักวิ่ง</p>
     </div>
@@ -50,19 +57,25 @@ $news = [
     <!-- วนลูปแสดงการ์ดข่าวสาร -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <?php foreach ($news as $item): ?>
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col justify-between hover:shadow-md transition-shadow">
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col justify-between hover:shadow-xl hover:border-brand-300 transition-all group">
                 <div>
-                    <img src="<?= $item['img'] ?>" alt="" class="w-full h-40 object-cover">
-                    <div class="p-4 space-y-2">
-                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-brand-700 border border-brand-200">
-                            <?= $item['category'] ?>
+                    <div class="w-full h-44 overflow-hidden bg-slate-100">
+                        <img src="<?= e($item['img']) ?>" alt="<?= e($item['title']) ?>" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                    </div>
+                    <div class="p-5 space-y-2.5">
+                        <span class="px-2.5 py-1 rounded-md text-[10px] font-bold bg-brand-50 text-brand-800 border border-brand-200">
+                            <?= e($item['category']) ?>
                         </span>
-                        <h3 class="font-bold text-sm text-slate-900 line-clamp-2"><?= $item['title'] ?></h3>
-                        <p class="text-xs text-slate-500 line-clamp-3"><?= $item['desc'] ?></p>
+                        <h3 class="font-bold text-sm sm:text-base text-slate-900 line-clamp-2 group-hover:text-brand-600 transition-colors">
+                            <?= e($item['title']) ?>
+                        </h3>
+                        <p class="text-xs text-slate-500 line-clamp-3 leading-relaxed">
+                            <?= e($item['desc']) ?>
+                        </p>
                     </div>
                 </div>
-                <div class="p-4 pt-0 text-[11px] text-slate-400 flex justify-between items-center border-t border-slate-50 mt-2">
-                    <span>📅 <?= $item['date'] ?></span>
+                <div class="p-5 pt-0 text-xs text-slate-400 flex justify-between items-center border-t border-slate-100 mt-2">
+                    <span>📅 <?= e($item['date']) ?></span>
                     <button onclick="alert('อ่านรายละเอียดข่าว: <?= addslashes($item['title']) ?>')" class="text-brand-600 font-bold hover:underline">อ่านต่อ</button>
                 </div>
             </div>
@@ -71,4 +84,4 @@ $news = [
 
 </div>
 
-<?php require_once "footer.php"; ?>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

@@ -1,12 +1,12 @@
 /**
  * ==========================================================
  * ไฟล์: assets/js/app.js
- * คำอธิบาย: สคริปต์ JavaScript เสริมการทำงานของหน้าเว็บ
+ * คำอธิบาย: สคริปต์ JavaScript จัดการ UI, Menu, Preview และ Flash Alerts
  * ==========================================================
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Mobile Menu Toggle
+    // 1. จัดการ Mobile Menu Toggle
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');
     const mobileMenu = document.getElementById('mobile-menu');
 
@@ -16,47 +16,45 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ฟังก์ชันช่วยจัดการ Live Preview รูปภาพ
-    function setupImagePreview(inputId, containerId, imgId, placeholderId, nameId) {
+    // 2. ฟังก์ชันช่วยจัดการ Live Preview รูปภาพ พร้อมตรวจขนาดไฟล์
+    function bindImagePreview(inputId, boxId, imgId, maxSizeMB = 5) {
         const input = document.getElementById(inputId);
-        const container = document.getElementById(containerId);
+        const box = document.getElementById(boxId);
         const img = document.getElementById(imgId);
-        const placeholder = document.getElementById(placeholderId);
-        const nameEl = document.getElementById(nameId);
 
-        if (!input || !img) return;
+        if (!input || !box || !img) return;
 
         input.addEventListener('change', function() {
             const file = this.files[0];
             if (file) {
-                // ตรวจสอบขนาดไฟล์ <= 2MB
-                const maxSize = 2 * 1024 * 1024;
-                if (file.size > maxSize) {
-                    alert('⚠️ ไฟล์ ' + file.name + ' มีขนาดเกิน 2MB กรุณาเลือกไฟล์ใหม่');
+                // ตรวจสอบขนาดไฟล์
+                const maxBytes = maxSizeMB * 1024 * 1024;
+                if (file.size > maxBytes) {
+                    alert(`⚠️ ไฟล์ "${file.name}" มีขนาดเกิน ${maxSizeMB}MB กรุณาเลือกไฟล์ที่มีขนาดเล็กลง`);
                     this.value = '';
-                    if (container) container.classList.add('hidden');
-                    if (placeholder) placeholder.classList.remove('hidden');
+                    box.classList.add('hidden');
+                    box.classList.remove('flex');
+                    img.src = '';
                     return;
                 }
 
-                // แสดงตัวอย่างรูปภาพ
+                // แสดงตัวอย่างรูปภาพทันที
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     img.src = e.target.result;
-                    if (container) container.classList.remove('hidden');
-                    if (placeholder) placeholder.classList.add('hidden');
-                    if (nameEl) nameEl.textContent = `${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`;
+                    box.classList.remove('hidden');
+                    box.classList.add('flex');
                 };
                 reader.readAsDataURL(file);
             }
         });
     }
 
-    // 2. ตั้งค่า Live Preview สำหรับ Runner Photo และ Slip Image
-    setupImagePreview('runner_photo', 'runner-photo-preview-container', 'runner-photo-preview-img', 'runner-photo-placeholder', 'runner-photo-name');
-    setupImagePreview('slip_image', 'slip-preview-container', 'slip-preview-img', 'upload-placeholder', 'slip-file-name');
+    // เรียกใช้งาน Preview สำหรับหน้าสมัครวิ่ง
+    bindImagePreview('runner_photo_input', 'runner_photo_preview_box', 'runner_photo_preview', 5);
+    bindImagePreview('slip_input', 'slip_preview_box', 'slip_preview', 5);
 
-    // 3. Auto dismiss flash alert after 6 seconds
+    // 3. ปิดกล่องข้อความแจ้งเตือน Flash Alert อัตโนมัติหลัง 6 วินาที
     const flashAlert = document.getElementById('flash-alert');
     if (flashAlert) {
         setTimeout(() => {
