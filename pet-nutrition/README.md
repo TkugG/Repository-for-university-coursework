@@ -9,6 +9,13 @@
 
 ```
 pet-nutrition/
+├── assets/
+│   ├── css/
+│   │   ├── main.css           🎨 ธีมสี Warm Earthy Brown, UI Layout, Form, Modal
+│   │   └── print.css          🖨️ สไตล์เอกสาร A4 Printable Worksheet (ถอดแบบ PNA)
+│   └── js/
+│       ├── models.js          🧠 คลาส OOP ฝั่ง Frontend (Pet, Dog, Cat, Food, etc.)
+│       └── app.js             ⚡ UI Controller, Food Catalog, Event Handlers, Print
 ├── classes/
 │   ├── Pet.php                🟢 ก้อนที่ 1: คลาสแม่ Pet และคลาสลูก Dog, Cat (Inheritance & Polymorphism)
 │   ├── Food.php               🟡 ก้อนที่ 2: คลาส Food เก็บข้อมูลอาหารและคำนวณพลังงานต่อกรัม
@@ -18,7 +25,7 @@ pet-nutrition/
 │   ├── test_classes.php       🧪 สคริปต์ Unit Test ทดสอบการทำงานของทั้ง 4 คลาส
 │   └── test_api.php           🧪 สคริปต์ทดสอบ API endpoint calculate
 ├── api.php                    ⚡ REST API Handler (รองรับ action=calculate)
-├── index.html                 🎨 Single Page Application (Scandinavian Veterinary Health UI)
+├── index.html                 📄 หน้าเว็บคลีนๆ (Separation of Concerns ~480 บรรทัด)
 └── README.md                  📖 คู่มือการใช้งานและเอกสารสถาปัตยกรรม
 ```
 
