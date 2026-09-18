@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PetCare Nutrition Studio — คำนวณและจัดตารางมื้ออาหารสัตว์เลี้ยง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Prompt:wght@400;500;600;700&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   DESIGN SYSTEM — SCANDINAVIAN VETERINARY HEALTH & NUTRITION
+   Palette: Slate Ink, Pure White, Vitality Emerald, Warm Honey
+   ══════════════════════════════════════════════════════════════════ */
+:root {
+  /* Canvas & Surface */
+  --bg-canvas:       #F8FAFC;
+  --bg-surface:      #FFFFFF;
+  --bg-subtle:       #F1F5F9;
+  --bg-hover:        #E2E8F0;
+  
+  /* Text */
+  --text-primary:    #0F172A;
+  --text-secondary:  #475569;
+  --text-muted:      #64748B;
+  --text-white:      #FFFFFF;
+  
+  /* Borders */
+  --border-subtle:   #E2E8F0;
+  --border-focus:    #059669;
+  
+  /* Brand Accents */
+  --emerald-600:     #059669;
+  --emerald-700:     #047857;
+  --emerald-50:      #ECFDF5;
+  --emerald-100:     #D1FAE5;
+  --emerald-glow:    rgba(5, 150, 105, 0.16);
+  
+  --amber-600:       #D97706;
+  --amber-500:       #F59E0B;
+  --amber-50:        #FFFBEB;
+  --amber-100:       #FEF3C7;
+  
+  /* Shadows */
+  --shadow-sm:       0 1px 2px 0 rgba(15, 23, 42, 0.04);
+  --shadow-card:     0 4px 6px -1px rgba(15, 23, 42, 0.04), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+  --shadow-elevated: 0 12px 28px -4px rgba(15, 23, 42, 0.08), 0 4px 10px -2px rgba(15, 23, 42, 0.03);
+  
+  /* Radii */
+  --radius-xs:       6px;
+  --radius-sm:       10px;
+  --radius-md:       14px;
+  --radius-lg:       20px;
+  --radius-pill:     9999px;
+  
+  --trans-fast:      all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --trans-normal:    all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Sarabun', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+  min-height: 100vh;
+  line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Typography Helpers */
+h1, h2, h3, h4, .font-heading {
+  font-family: 'Prompt', sans-serif;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.font-number {
+  font-family: 'Outfit', sans-serif;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/* ── APP HEADER ── */
+.app-header {
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: var(--shadow-sm);
+}
+
+.header-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+
+.brand-symbol {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-sm);
+  background: var(--emerald-600);
+  color: var(--text-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  box-shadow: 0 2px 8px var(--emerald-glow);
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-title {
+  font-family: 'Prompt', sans-serif;
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.brand-tagline {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.preset-button {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  font-family: 'Prompt', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--trans-fast);
+}
+
+.preset-button:hover {
+  background: var(--emerald-50);
+  border-color: var(--emerald-600);
+  color: var(--emerald-700);
+}
+
+/* ── MAIN CONTENT LAYOUT ── */
+.main-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+  width: 100%;
+  flex: 1;
+}
+
+.layout-grid {
+  display: grid;
+  grid-template-columns: 5fr 4fr;
+  gap: 32px;
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .layout-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+
+/* ── CARD SURFACES ── */
+.card-panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.panel-title {
+  font-family: 'Prompt', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel-badge {
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--emerald-50);
+  color: var(--emerald-700);
+  border: 1px solid var(--emerald-100);
+}
+
+.panel-body {
+  padding: 24px;
+}
+
+/* ── FORM ELEMENTS ── */
+.form-step {
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.form-step:last-of-type {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.step-header {
+  margin-bottom: 16px;
+}
+
+.step-label {
+  font-family: 'Prompt', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.step-desc {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* Segmented Species Switcher */
+.species-selector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.species-tab {
+  border: 2px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  background: var(--bg-surface);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: var(--trans-fast);
+  user-select: none;
+}
+
+.species-tab:hover {
+  border-color: var(--text-muted);
+  background: var(--bg-subtle);
+}
+
+.species-tab.active {
+  border-color: var(--emerald-600);
+  background: var(--emerald-50);
+}
+
+.species-tab-icon {
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.species-tab-name {
+  font-family: 'Prompt', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.species-tab.active .species-tab-name {
+  color: var(--emerald-700);
+}
+
+.species-tab-meta {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* Form Controls */
+.field-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.field-group {
+  margin-bottom: 16px;
+}
+
+.field-group:last-child {
+  margin-bottom: 0;
+}
+
+.field-label {
+  display: block;
+  font-family: 'Prompt', sans-serif;
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.input-text, .input-select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-family: 'Sarabun', sans-serif;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  transition: var(--trans-fast);
+}
+
+.input-text:focus, .input-select:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--emerald-glow);
+}
+
+/* Weight Stepper */
+.weight-box {
+  display: flex;
+  align-items: center;
+  border: 1.5px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  overflow: hidden;
+  transition: var(--trans-fast);
+}
+
+.weight-box:focus-within {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--emerald-glow);
+}
+
+.weight-btn {
+  width: 44px;
+  height: 44px;
+  background: var(--bg-subtle);
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.25rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--trans-fast);
+  user-select: none;
+}
+
+.weight-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.weight-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--emerald-700);
+  text-align: center;
+  outline: none;
+  padding: 4px;
+}
+
+.weight-unit {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding-right: 14px;
+}
+
+/* Modern Segmented Radio Pills */
+.segmented-pills {
+  display: flex;
+  gap: 8px;
+  background: var(--bg-subtle);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+}
+
+.pill-option {
+  flex: 1;
+}
+
+.pill-option input {
+  display: none;
+}
+
+.pill-box {
+  display: block;
+  text-align: center;
+  padding: 8px 10px;
+  border-radius: var(--radius-xs);
+  font-family: 'Prompt', sans-serif;
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--trans-fast);
+  white-space: nowrap;
+}
+
+.pill-option input:checked + .pill-box {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Checkbox Toggle Card */
+.toggle-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1.5px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  cursor: pointer;
+  transition: var(--trans-fast);
+  user-select: none;
+}
+
+.toggle-card:hover {
+  border-color: var(--text-muted);
+}
+
+.toggle-card input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--emerald-600);
+  cursor: pointer;
+}
+
+.toggle-text {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* Preset Chips for Food */
+.preset-wrap {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.preset-chip-btn {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: var(--trans-fast);
+}
+
+.preset-chip-btn:hover {
+  background: var(--emerald-50);
+  border-color: var(--emerald-600);
+  color: var(--emerald-700);
+}
+
+/* Primary Action Button */
+.cta-button {
+  width: 100%;
+  padding: 14px 20px;
+  background: var(--emerald-600);
+  color: var(--text-white);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: 'Prompt', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 4px 12px var(--emerald-glow);
+  transition: var(--trans-fast);
+  margin-top: 24px;
+}
+
+.cta-button:hover {
+  background: var(--emerald-700);
+  box-shadow: 0 6px 18px var(--emerald-glow);
+  transform: translateY(-1px);
+}
+
+.cta-button:active {
+  transform: translateY(0);
+}
+
+/* ── RESULTS PANEL (RIGHT) ── */
+.results-container {
+  position: sticky;
+  top: 92px;
+}
+
+/* State 1: Empty / Initial Placeholder */
+.results-placeholder {
+  padding: 56px 24px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.placeholder-graphic {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--emerald-50);
+  color: var(--emerald-600);
+  font-size: 1.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+}
+
+.placeholder-title {
+  font-family: 'Prompt', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.placeholder-desc {
+  font-size: 0.88rem;
+  line-height: 1.5;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+/* State 2: Active Results Display */
+.results-active {
+  display: none;
+  animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Hero Metric Cards */
+.hero-results-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.metric-hero-card {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 20px 16px;
+  text-align: center;
+  transition: var(--trans-normal);
+}
+
+.metric-hero-card.primary {
+  background: var(--emerald-50);
+  border-color: var(--emerald-100);
+}
+
+.metric-label {
+  font-family: 'Prompt', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.metric-value {
+  font-size: 2.25rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.metric-hero-card.primary .metric-value {
+  color: var(--emerald-700);
+}
+
+.metric-sub {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* Meal Schedule Timeline */
+.timeline-section {
+  margin-bottom: 24px;
+}
+
+.section-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.timeline-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.timeline-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-left: 4px solid var(--emerald-600);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  transition: var(--trans-fast);
+}
+
+.timeline-row:hover {
+  border-color: var(--emerald-600);
+  transform: translateX(2px);
+}
+
+.timeline-time-tag {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--emerald-700);
+  background: var(--emerald-50);
+  padding: 4px 8px;
+  border-radius: var(--radius-xs);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.timeline-meal-name {
+  font-family: 'Prompt', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-left: 10px;
+}
+
+.timeline-portion {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.timeline-unit {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* Clinical Energy Details (Clean Disclose) */
+.clinical-box {
+  background: var(--bg-subtle);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.clinical-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  text-align: center;
+}
+
+.clinical-item {
+  background: var(--bg-surface);
+  padding: 10px 8px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-subtle);
+}
+
+.clinical-lbl {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.clinical-val {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Vet Advice Note */
+.advice-note {
+  background: var(--amber-50);
+  border: 1px solid var(--amber-100);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  font-size: 0.84rem;
+  color: #78350F;
+  line-height: 1.55;
+}
+
+/* ── MODAL (OOP ARCHITECTURE INSPECTOR) ── */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-backdrop.active {
+  display: flex;
+}
+
+.modal-card {
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  max-width: 620px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-elevated);
+  border: 1px solid var(--border-subtle);
+}
+
+.modal-head {
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-head h3 {
+  font-size: 1.1rem;
+}
+
+.btn-close {
+  background: transparent;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.modal-content {
+  padding: 24px;
+}
+
+.class-spec-box {
+  background: var(--bg-subtle);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  font-size: 0.85rem;
+}
+
+.class-spec-head {
+  font-family: 'Outfit', monospace;
+  font-weight: 700;
+  color: var(--emerald-700);
+  margin-bottom: 4px;
+}
+
+/* ── FOOTER ── */
+.app-footer {
+  margin-top: auto;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  padding: 20px 24px;
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.footer-link {
+  color: var(--emerald-700);
+  text-decoration: none;
+  font-weight: 500;
+  cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════
+     HEADER
+     ══════════════════════════════════════════════════════ -->
+<header class="app-header">
+  <div class="header-container">
+    <div class="header-brand">
+      <div class="brand-symbol">🐾</div>
+      <div class="brand-text">
+        <div class="brand-title">PetCare Nutrition Studio</div>
+        <div class="brand-tagline">ระบบคำนวณสารอาหารและจัดตารางมื้ออาหารสัตว์เลี้ยง</div>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button type="button" class="preset-button" onclick="loadSample('dog')">สุนัขตัวอย่าง (10 kg)</button>
+      <button type="button" class="preset-button" onclick="loadSample('cat')">แมวตัวอย่าง (4 kg)</button>
+    </div>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════════════════
+     MAIN CONTAINER
+     ══════════════════════════════════════════════════════ -->
+<main class="main-wrapper">
+  
+  <div class="layout-grid">
+
+    <!-- ───────────────────────────────────────────────
+         COLUMN 1: ฟอร์มกรอกข้อมูล (INPUT CONSOLE)
+         ─────────────────────────────────────────────── -->
+    <div class="card-panel">
+      <div class="panel-header">
+        <span class="panel-title">กรอกข้อมูลสัตว์เลี้ยง & อาหาร</span>
+        <span class="panel-badge">มาตรฐาน AAFCO / NRC</span>
+      </div>
+      
+      <form id="calculator-form" class="panel-body" onsubmit="event.preventDefault(); handleCalculate();">
+
+        <!-- 1. ชนิดสัตว์เลี้ยง -->
+        <div class="form-step">
+          <div class="step-header">
+            <div class="step-label">1. ชนิดสัตว์เลี้ยง</div>
+            <div class="step-desc">เลือกประเภทสัตว์เลี้ยงเพื่อใช้เกณฑ์คำนวณพลังงานที่เหมาะสม</div>
+          </div>
+
+          <div class="species-selector">
+            <div id="tab-dog" class="species-tab active" onclick="setSpecies('dog')">
+              <div class="species-tab-icon">🐶</div>
+              <div>
+                <div class="species-tab-name">สุนัข (Canine)</div>
+                <div class="species-tab-meta">คิดตามสายพันธุ์และกิจกรรม</div>
+              </div>
+            </div>
+
+            <div id="tab-cat" class="species-tab" onclick="setSpecies('cat')">
+              <div class="species-tab-icon">🐈</div>
+              <div>
+                <div class="species-tab-name">แมว (Feline)</div>
+                <div class="species-tab-meta">คิดตามการเลี้ยงดูใน/นอกบ้าน</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ชื่อ และ น้ำหนัก -->
+          <div class="field-grid-2">
+            <div class="field-group">
+              <label class="field-label" for="pet-name">ชื่อสัตว์เลี้ยง</label>
+              <input type="text" id="pet-name" class="input-text" value="บัดดี้" placeholder="เช่น บัดดี้">
+            </div>
+
+            <div class="field-group">
+              <label class="field-label" for="pet-weight">น้ำหนักตัว (สำคัญสุด)</label>
+              <div class="weight-box">
+                <button type="button" class="weight-btn" onclick="adjustWeight(-0.5)">−</button>
+                <input type="number" id="pet-weight" class="weight-input" value="10.0" min="0.5" max="90" step="0.1" required>
+                <span class="weight-unit">kg</span>
+                <button type="button" class="weight-btn" onclick="adjustWeight(0.5)">+</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ช่วงวัย -->
+          <div class="field-group">
+            <label class="field-label">ช่วงวัย</label>
+            <div class="segmented-pills">
+              <label class="pill-option">
+                <input type="radio" name="age-stage" value="puppy_kitten">
+                <span class="pill-box">ลูกสัตว์ (วัยโต)</span>
+              </label>
+              <label class="pill-option">
+                <input type="radio" name="age-stage" value="adult" checked>
+                <span class="pill-box">โตเต็มวัย (Adult)</span>
+              </label>
+              <label class="pill-option">
+                <input type="radio" name="age-stage" value="senior">
+                <span class="pill-box">สูงวัย (Senior)</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- กิจกรรม -->
+          <div class="field-group">
+            <label class="field-label">ระดับกิจกรรมประจำวัน</label>
+            <div class="segmented-pills">
+              <label class="pill-option">
+                <input type="radio" name="activity-level" value="low">
+                <span class="pill-box">กิจกรรมน้อย</span>
+              </label>
+              <label class="pill-option">
+                <input type="radio" name="activity-level" value="normal" checked>
+                <span class="pill-box">กิจกรรมปกติ</span>
+              </label>
+              <label class="pill-option">
+                <input type="radio" name="activity-level" value="high">
+                <span class="pill-box">คึกคักมาก</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- ทำหมัน และ ฟิลด์เฉพาะ -->
+          <div class="field-grid-2" style="margin-top:14px;">
+            <label class="toggle-card" for="is-neutered">
+              <input type="checkbox" id="is-neutered" checked>
+              <span class="toggle-text">ทำหมันแล้ว (Neutered)</span>
+            </label>
+
+            <!-- ฟิลด์เฉพาะสุนัข -->
+            <div id="dog-specific-field">
+              <label class="field-label" for="dog-breed-size">ขนาดสายพันธุ์</label>
+              <select id="dog-breed-size" class="input-select">
+                <option value="small">พันธุ์เล็ก (&lt; 10 kg)</option>
+                <option value="medium" selected>พันธุ์กลาง (10 - 25 kg)</option>
+                <option value="large">พันธุ์ใหญ่ (&gt; 25 kg)</option>
+              </select>
+            </div>
+
+            <!-- ฟิลด์เฉพาะแมว -->
+            <div id="cat-specific-field" style="display:none;">
+              <label class="field-label" for="cat-living-habit">รูปแบบการเลี้ยงดู</label>
+              <select id="cat-living-habit" class="input-select">
+                <option value="indoor" selected>เลี้ยงในบ้าน (Indoor)</option>
+                <option value="outdoor">เลี้ยงนอกบ้าน (Outdoor)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. ข้อมูลอาหาร -->
+        <div class="form-step">
+          <div class="step-header">
+            <div class="step-label">2. ข้อมูลอาหาร</div>
+            <div class="step-desc">ระบุประเภทอาหารและพลังงานต่อ 100 กรัมตามฉลากจริง</div>
+          </div>
+
+          <div class="field-grid-2">
+            <div class="field-group">
+              <label class="field-label">ประเภทอาหาร</label>
+              <div class="segmented-pills">
+                <label class="pill-option">
+                  <input type="radio" name="food-type" value="dry" checked onchange="switchFoodPreset('dry')">
+                  <span class="pill-box">อาหารเม็ด (Dry)</span>
+                </label>
+                <label class="pill-option">
+                  <input type="radio" name="food-type" value="wet" onchange="switchFoodPreset('wet')">
+                  <span class="pill-box">อาหารเปียก (Wet)</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label" for="food-calories">พลังงาน (kcal / 100g)</label>
+              <input type="number" id="food-calories" class="input-text" value="365" min="20" max="800" required>
+            </div>
+          </div>
+
+          <!-- Quick Presets -->
+          <div class="preset-wrap">
+            <span style="font-size:0.75rem;color:var(--text-muted);display:inline-flex;align-items:center;">ค่าตามท้องตลาด:</span>
+            <button type="button" class="preset-chip-btn" onclick="applyCalorie(360, 'dry')">เม็ดมาตรฐาน (360)</button>
+            <button type="button" class="preset-chip-btn" onclick="applyCalorie(385, 'dry')">เม็ดลูกสัตว์ (385)</button>
+            <button type="button" class="preset-chip-btn" onclick="applyCalorie(85, 'wet')">เปียกเพาช์ (85)</button>
+            <button type="button" class="preset-chip-btn" onclick="applyCalorie(95, 'wet')">เปียกกระป๋อง (95)</button>
+          </div>
+        </div>
+
+        <!-- 3. จัดตารางมื้ออาหาร -->
+        <div class="form-step">
+          <div class="step-header">
+            <div class="step-label">3. การจัดตารางมื้ออาหาร</div>
+            <div class="step-desc">กำหนดจำนวนมื้อและเวลาเริ่มต้นที่สะดวกให้อาหาร</div>
+          </div>
+
+          <div class="field-grid-2">
+            <div class="field-group">
+              <label class="field-label">จำนวนมื้อต่อวัน</label>
+              <div class="segmented-pills">
+                <label class="pill-option">
+                  <input type="radio" name="meals-count" value="1">
+                  <span class="pill-box">1 มื้อ</span>
+                </label>
+                <label class="pill-option">
+                  <input type="radio" name="meals-count" value="2" checked>
+                  <span class="pill-box">2 มื้อ ⭐</span>
+                </label>
+                <label class="pill-option">
+                  <input type="radio" name="meals-count" value="3">
+                  <span class="pill-box">3 มื้อ</span>
+                </label>
+                <label class="pill-option">
+                  <input type="radio" name="meals-count" value="4">
+                  <span class="pill-box">4 มื้อ</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label" for="first-meal-time">เวลาเริ่มมื้อแรก</label>
+              <input type="time" id="first-meal-time" class="input-text" value="08:00" required>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" id="btn-submit" class="cta-button">
+          <span id="btn-submit-text">คำนวณแผนโภชนาการ</span>
+          <span style="font-size:1.1rem;">➔</span>
+        </button>
+
+      </form>
+    </div>
+
+    <!-- ───────────────────────────────────────────────
+         COLUMN 2: แผงแสดงผลลัพธ์ (NUTRITION DASHBOARD)
+         ─────────────────────────────────────────────── -->
+    <div class="results-container">
+      <div class="card-panel">
+        
+        <!-- State 1: Placeholder เมื่อยังไม่คำนวณ -->
+        <div id="results-empty" class="results-placeholder">
+          <div class="placeholder-graphic">🥣</div>
+          <div class="placeholder-title">พร้อมจัดแผนโภชนาการ</div>
+          <div class="placeholder-desc">
+            กรอกข้อมูลสรีระสัตว์เลี้ยงและอาหารทางด้านซ้าย แล้วกดปุ่ม <strong>"คำนวณแผนโภชนาการ"</strong> เพื่อดูปริมาณกรัมและตารางเวลารายวัน
+          </div>
+        </div>
+
+        <!-- State 2: ผลลัพธ์สมบูรณ์แบบเมื่อกดคำนวณ -->
+        <div id="results-display" class="results-active">
+          
+          <div class="panel-header">
+            <span class="panel-title">สรุปแผนโภชนาการประจำวัน</span>
+            <span id="res-pet-badge" class="panel-badge">บัดดี้ (สุนัข)</span>
+          </div>
+
+          <div class="panel-body">
+            
+            <!-- Hero Metrics (ปริมาณรวมต่อวัน และ ต่อมื้อ) -->
+            <div class="hero-results-grid">
+              
+              <div class="metric-hero-card primary">
+                <div class="metric-label">ปริมาณรวมต่อวัน</div>
+                <div class="metric-value font-number" id="val-daily-grams">0.0</div>
+                <div class="metric-sub">กรัม/วัน <span id="val-cup-equivalent"></span></div>
+              </div>
+
+              <div class="metric-hero-card">
+                <div class="metric-label">ปริมาณต่อมื้อ</div>
+                <div class="metric-value font-number" id="val-portion-meal">0.0</div>
+                <div class="metric-sub">กรัม/มื้อ (<span id="val-meals-label">2</span> มื้อต่อวัน)</div>
+              </div>
+
+            </div>
+
+            <!-- Meal Schedule Timeline -->
+            <div class="timeline-section">
+              <div class="section-label-row">
+                <span style="font-family:'Prompt';font-weight:600;font-size:0.92rem;">ตารางเวลามื้ออาหาร</span>
+                <span style="font-size:0.75rem;color:var(--text-muted)">กรอบเวลากลางวัน</span>
+              </div>
+
+              <div class="timeline-list" id="timeline-container">
+                <!-- Dynamic timeline rows inserted here -->
+              </div>
+            </div>
+
+            <!-- Clinical Energy Breakdown -->
+            <div class="clinical-box">
+              <div style="font-family:'Prompt';font-size:0.8rem;font-weight:600;color:var(--text-secondary);margin-bottom:8px;">
+                สรุปเกณฑ์พลังงานมาตรฐาน (AAFCO/NRC)
+              </div>
+              <div class="clinical-grid">
+                <div class="clinical-item">
+                  <div class="clinical-lbl">RER ขั้นต่ำ</div>
+                  <div class="clinical-val" id="val-rer">0</div>
+                  <div style="font-size:0.65rem;color:var(--text-muted)">kcal/วัน</div>
+                </div>
+                <div class="clinical-item">
+                  <div class="clinical-lbl">ตัวคูณ Factor</div>
+                  <div class="clinical-val" id="val-factor">1.6x</div>
+                  <div style="font-size:0.65rem;color:var(--text-muted)">ตามสรีระ</div>
+                </div>
+                <div class="clinical-item">
+                  <div class="clinical-lbl">DER ต้องการจริง</div>
+                  <div class="clinical-val" style="color:var(--emerald-700);" id="val-der">0</div>
+                  <div style="font-size:0.65rem;color:var(--text-muted)">kcal/วัน</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Vet Advice -->
+            <div class="advice-note" id="advice-content">
+              <strong>คำแนะนำ:</strong> ควรเตรียมน้ำสะอาดให้สัตว์เลี้ยงดื่มตลอดวัน และตวงอาหารด้วยเครื่องชั่งดิจิทัลเพื่อความแม่นยำสูงสุด
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+<!-- ══════════════════════════════════════════════════════
+     OOP ARCHITECTURE MODAL (FOR DEVELOPERS)
+     ══════════════════════════════════════════════════════ -->
+<div class="modal-backdrop" id="oop-modal" onclick="closeModal(event)">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <h3>สถาปัตยกรรม 4 คลาสหลัก (OOP Architecture)</h3>
+      <button type="button" class="btn-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-content">
+      <div class="class-spec-box">
+        <div class="class-spec-head">1. Pet (Base Class) ➔ Dog, Cat</div>
+        <div>เก็บข้อมูลสรีระสัตว์เลี้ยง และคิดตัวคูณ DER Multiplier ผ่าน Polymorphism ตามสายพันธุ์/การเลี้ยงดู</div>
+      </div>
+      <div class="class-spec-box">
+        <div class="class-spec-head">2. Food</div>
+        <div>เก็บข้อมูลอาหาร และแปลง kcal/100g สู่ caloriesPerGram สำหรับคำนวณ</div>
+      </div>
+      <div class="class-spec-box">
+        <div class="class-spec-head">3. FeedingCalculator</div>
+        <div>Pure calculation: คำนวณ RER (70×wt^0.75), DER, และกรัมอาหารต่อวัน (DER ÷ calPerGram)</div>
+      </div>
+      <div class="class-spec-box">
+        <div class="class-spec-head">4. FeedingSchedule</div>
+        <div>ซอยกรัมต่อวันเป็นมื้ออาหาร และกระจายเวลาในกรอบเวลากลางวันเพื่อสุขภาพการย่อยที่ดี</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     FOOTER
+     ══════════════════════════════════════════════════════ -->
+<footer class="app-footer">
+  PetCare Nutrition Studio • พัฒนาด้วย Clean OOP Architecture (PHP 8.2 & Modern Web) • 
+  <a class="footer-link" onclick="openModal()">ดูโครงสร้าง 4 คลาส</a>
+</footer>
+
+<!-- ══════════════════════════════════════════════════════
+     JAVASCRIPT LOGIC (4 OOP Classes & UI Controller)
+     ══════════════════════════════════════════════════════ -->
+<script>
+let currentSpecies = 'dog';
+
+// ── 1. ก้อนสัตว์เลี้ยง (Pet, Dog, Cat) ──
+class Pet {
+  constructor(name, weight, ageStage, activityLevel, isNeutered) {
+    this.name = name || 'สัตว์เลี้ยง';
+    this.weight = Math.max(0.1, parseFloat(weight) || 5.0);
+    this.ageStage = ageStage || 'adult';
+    this.activityLevel = activityLevel || 'normal';
+    this.isNeutered = Boolean(isNeutered);
+  }
+  getDERMultiplier() { return 1.6; }
+  getSpeciesLabel() { return 'สัตว์เลี้ยง'; }
+}
+
+class Dog extends Pet {
+  constructor(name, weight, ageStage, activityLevel, isNeutered, breedSize = 'medium') {
+    super(name, weight, ageStage, activityLevel, isNeutered);
+    this.breedSize = breedSize;
+  }
+  getSpeciesLabel() { return 'สุนัข'; }
+  getDERMultiplier() {
+    if (this.ageStage === 'puppy_kitten') return 2.5;
+    let base = this.ageStage === 'senior' ? 1.4 : (this.isNeutered ? 1.6 : 1.8);
+    if (this.activityLevel === 'low') base -= 0.2;
+    if (this.activityLevel === 'high') base += 0.3;
+    if (this.breedSize === 'small') base += 0.05;
+    return Math.max(1.0, Math.round(base * 100) / 100);
+  }
+}
+
+class Cat extends Pet {
+  constructor(name, weight, ageStage, activityLevel, isNeutered, livingHabit = 'indoor') {
+    super(name, weight, ageStage, activityLevel, isNeutered);
+    this.livingHabit = livingHabit;
+  }
+  getSpeciesLabel() { return 'แมว'; }
+  getDERMultiplier() {
+    if (this.ageStage === 'puppy_kitten') return 2.5;
+    let base = this.ageStage === 'senior' ? 1.1 : (this.isNeutered ? 1.2 : 1.4);
+    if (this.livingHabit === 'indoor') base -= 0.1;
+    if (this.livingHabit === 'outdoor') base += 0.2;
+    if (this.activityLevel === 'low') base -= 0.1;
+    if (this.activityLevel === 'high') base += 0.2;
+    return Math.max(1.0, Math.round(base * 100) / 100);
+  }
+}
+
+// ── 2. ก้อนอาหาร (Food) ──
+class Food {
+  constructor(name, foodType, caloriesPer100g) {
+    this.name = name || 'อาหาร';
+    this.foodType = foodType || 'dry';
+    this.caloriesPer100g = Math.max(1, parseFloat(caloriesPer100g) || 365);
+  }
+  getCaloriesPerGram() {
+    return this.caloriesPer100g / 100.0;
+  }
+}
+
+// ── 3. ก้อนเครื่องคำนวณ (FeedingCalculator) ──
+class FeedingCalculator {
+  static calculateRER(weight) {
+    return Math.round(70 * Math.pow(weight, 0.75) * 100) / 100;
+  }
+  static calculateDER(pet) {
+    const rer = this.calculateRER(pet.weight);
+    return Math.round(rer * pet.getDERMultiplier() * 100) / 100;
+  }
+  static calculateDailyPortion(pet, food) {
+    const der = this.calculateDER(pet);
+    return Math.round((der / food.getCaloriesPerGram()) * 10) / 10;
+  }
+}
+
+// ── 4. ก้อนจัดตารางเวลา (FeedingSchedule) ──
+class FeedingSchedule {
+  constructor(mealsPerDay = 2, firstMealTime = '08:00') {
+    this.mealsPerDay = Math.max(1, parseInt(mealsPerDay) || 2);
+    this.firstMealTime = firstMealTime || '08:00';
+  }
+  calculatePortionPerMeal(dailyGrams) {
+    return Math.round((dailyGrams / this.mealsPerDay) * 10) / 10;
+  }
+  generateSchedule() {
+    const [h, m] = this.firstMealTime.split(':').map(Number);
+    const startMins = (h || 8) * 60 + (m || 0);
+
+    if (this.mealsPerDay === 1) {
+      return [this.fmt(startMins)];
+    }
+
+    const spanMins = this.mealsPerDay >= 4 ? 720 : 600; // 10-12 ชั่วโมง
+    const interval = Math.round(spanMins / (this.mealsPerDay - 1));
+
+    const times = [];
+    for (let i = 0; i < this.mealsPerDay; i++) {
+      times.push(this.fmt(startMins + (i * interval)));
+    }
+    return times;
+  }
+  fmt(mins) {
+    const norm = (mins % (24 * 60));
+    const hh = String(Math.floor(norm / 60)).padStart(2, '0');
+    const mm = String(norm % 60).padStart(2, '0');
+    return `${hh}:${mm}`;
+  }
+  getMealSlots(dailyGrams) {
+    const times = this.generateSchedule();
+    const portion = this.calculatePortionPerMeal(dailyGrams);
+    const names = {
+      1: ['มื้อหลักประจำวัน'],
+      2: ['มื้อเช้า', 'มื้อเย็น'],
+      3: ['มื้อเช้า', 'มื้อกลางวัน', 'มื้อเย็น'],
+      4: ['มื้อเช้า', 'มื้อกลางวัน', 'มื้อบ่าย/เย็น', 'มื้อค่ำ']
+    }[this.mealsPerDay] || times.map((_, i) => `มื้อที่ ${i + 1}`);
+
+    return times.map((time, i) => ({
+      mealName: names[i] || `มื้อที่ ${i + 1}`,
+      time: time,
+      portionGrams: portion
+    }));
+  }
+}
+
+// ── UI EVENT HANDLERS ──
+
+function setSpecies(species) {
+  currentSpecies = species;
+  const dogTab = document.getElementById('tab-dog');
+  const catTab = document.getElementById('tab-cat');
+  const dogField = document.getElementById('dog-specific-field');
+  const catField = document.getElementById('cat-specific-field');
+  const nameInput = document.getElementById('pet-name');
+  const weightInput = document.getElementById('pet-weight');
+
+  if (species === 'dog') {
+    dogTab.classList.add('active');
+    catTab.classList.remove('active');
+    dogField.style.display = 'block';
+    catField.style.display = 'none';
+    if (nameInput.value === 'มิ้ว') nameInput.value = 'บัดดี้';
+    if (parseFloat(weightInput.value) < 4) weightInput.value = '10.0';
+  } else {
+    catTab.classList.add('active');
+    dogTab.classList.remove('active');
+    catField.style.display = 'block';
+    dogField.style.display = 'none';
+    if (nameInput.value === 'บัดดี้') nameInput.value = 'มิ้ว';
+    if (parseFloat(weightInput.value) > 10) weightInput.value = '4.0';
+  }
+}
+
+function adjustWeight(delta) {
+  const input = document.getElementById('pet-weight');
+  let val = Math.max(0.5, Math.round((parseFloat(input.value || 5) + delta) * 10) / 10);
+  input.value = val.toFixed(1);
+}
+
+function switchFoodPreset(type) {
+  const calInput = document.getElementById('food-calories');
+  calInput.value = (type === 'wet') ? '85' : '365';
+}
+
+function applyCalorie(kcal, type) {
+  document.getElementById('food-calories').value = kcal;
+  const radios = document.querySelectorAll('input[name="food-type"]');
+  radios.forEach(r => { if (r.value === type) r.checked = true; });
+}
+
+function loadSample(type) {
+  if (type === 'dog') {
+    setSpecies('dog');
+    document.getElementById('pet-name').value = 'บัดดี้';
+    document.getElementById('pet-weight').value = '10.0';
+    document.querySelector('input[name="age-stage"][value="adult"]').checked = true;
+    document.querySelector('input[name="activity-level"][value="normal"]').checked = true;
+    document.getElementById('is-neutered').checked = true;
+    document.getElementById('dog-breed-size').value = 'medium';
+    document.querySelector('input[name="food-type"][value="dry"]').checked = true;
+    document.getElementById('food-calories').value = '365';
+    document.querySelector('input[name="meals-count"][value="2"]').checked = true;
+    document.getElementById('first-meal-time').value = '08:00';
+  } else {
+    setSpecies('cat');
+    document.getElementById('pet-name').value = 'มิ้ว';
+    document.getElementById('pet-weight').value = '4.0';
+    document.querySelector('input[name="age-stage"][value="adult"]').checked = true;
+    document.querySelector('input[name="activity-level"][value="normal"]').checked = true;
+    document.getElementById('is-neutered').checked = true;
+    document.getElementById('cat-living-habit').value = 'indoor';
+    document.querySelector('input[name="food-type"][value="wet"]').checked = true;
+    document.getElementById('food-calories').value = '85';
+    document.querySelector('input[name="meals-count"][value="3"]').checked = true;
+    document.getElementById('first-meal-time').value = '07:30';
+  }
+  handleCalculate();
+}
+
+// ── CORE SUBMIT & REVEAL INTERACTION ──
+function handleCalculate() {
+  const btn = document.getElementById('btn-submit');
+  const btnText = document.getElementById('btn-submit-text');
+
+  // Active Feedback on Button
+  btn.style.opacity = '0.85';
+  btnText.textContent = 'กำลังคำนวณ...';
+
+  setTimeout(() => {
+    // 1. Gather Form Data
+    const name = document.getElementById('pet-name').value || 'สัตว์เลี้ยง';
+    const weight = Math.max(0.1, parseFloat(document.getElementById('pet-weight').value) || 5.0);
+    const ageStage = document.querySelector('input[name="age-stage"]:checked')?.value || 'adult';
+    const activityLevel = document.querySelector('input[name="activity-level"]:checked')?.value || 'normal';
+    const isNeutered = document.getElementById('is-neutered').checked;
+
+    let pet;
+    if (currentSpecies === 'cat') {
+      const habit = document.getElementById('cat-living-habit').value;
+      pet = new Cat(name, weight, ageStage, activityLevel, isNeutered, habit);
+    } else {
+      const size = document.getElementById('dog-breed-size').value;
+      pet = new Dog(name, weight, ageStage, activityLevel, isNeutered, size);
+    }
+
+    const foodType = document.querySelector('input[name="food-type"]:checked')?.value || 'dry';
+    const calories = Math.max(1, parseFloat(document.getElementById('food-calories').value) || 365);
+    const food = new Food('อาหาร', foodType, calories);
+
+    const mealsCount = parseInt(document.querySelector('input[name="meals-count"]:checked')?.value || '2');
+    const firstMealTime = document.getElementById('first-meal-time').value || '08:00';
+    const schedule = new FeedingSchedule(mealsCount, firstMealTime);
+
+    // 2. Compute Results using the 4 Core OOP Classes
+    const rer = FeedingCalculator.calculateRER(pet.weight);
+    const der = FeedingCalculator.calculateDER(pet);
+    const dailyGrams = FeedingCalculator.calculateDailyPortion(pet, food);
+    const portionPerMeal = schedule.calculatePortionPerMeal(dailyGrams);
+    const slots = schedule.getMealSlots(dailyGrams);
+
+    // 3. Render Results
+    document.getElementById('results-empty').style.display = 'none';
+    const displayEl = document.getElementById('results-display');
+    displayEl.style.display = 'block';
+
+    document.getElementById('res-pet-badge').textContent = `${pet.name} (${pet.getSpeciesLabel()} • ${pet.weight} kg)`;
+    document.getElementById('val-daily-grams').textContent = dailyGrams.toFixed(1);
+    document.getElementById('val-portion-meal').textContent = portionPerMeal.toFixed(1);
+    document.getElementById('val-meals-label').textContent = mealsCount;
+
+    if (foodType === 'dry') {
+      const cups = (dailyGrams / 90).toFixed(1);
+      document.getElementById('val-cup-equivalent').textContent = `(~${cups} ถ้วยตวง)`;
+    } else {
+      document.getElementById('val-cup-equivalent').textContent = '';
+    }
+
+    document.getElementById('val-rer').textContent = Math.round(rer);
+    document.getElementById('val-factor').textContent = `${pet.getDERMultiplier()}x`;
+    document.getElementById('val-der').textContent = Math.round(der);
+
+    // Render Timeline
+    const timelineEl = document.getElementById('timeline-container');
+    timelineEl.innerHTML = slots.map(slot => `
+      <div class="timeline-row">
+        <div style="display:flex;align-items:center;">
+          <span class="timeline-time-tag">${slot.time} น.</span>
+          <span class="timeline-meal-name">${slot.mealName}</span>
+        </div>
+        <div style="text-align:right;">
+          <span class="timeline-portion">${slot.portionGrams}</span>
+          <span class="timeline-unit">กรัม</span>
+        </div>
+      </div>
+    `).join('');
+
+    // Contextual Advice
+    let advice = `<strong>คำแนะนำเฉพาะตัว:</strong> ควรเตรียมน้ำสะอาดให้ ${pet.name} ดื่มตลอดทั้งวัน (~${Math.round(weight * 55)} ml/วัน)`;
+    if (currentSpecies === 'cat' && pet.livingHabit === 'indoor') {
+      advice += ` • สำหรับแมวเลี้ยงในบ้าน แนะนำให้กระตุ้นการออกกำลังกายด้วยของเล่นเพื่อควบคุมน้ำหนัก`;
+    }
+    if (ageStage === 'puppy_kitten') {
+      advice += ` • สัตว์เลี้ยงวัยกำลังโตต้องการพลังงานสูง แบ่ง 3-4 มื้อเพื่อการดูดซึมสารอาหารที่ดี`;
+    }
+    document.getElementById('advice-content').innerHTML = advice;
+
+    // Reset button state
+    btn.style.opacity = '1';
+    btnText.textContent = 'คำนวณใหม่อีกครั้ง';
+
+    // Scroll to results on mobile devices
+    if (window.innerWidth <= 960) {
+      displayEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, 220);
+}
+
+// ── MODAL TOGGLES ──
+function openModal() {
+  document.getElementById('oop-modal').classList.add('active');
+}
+
+function closeModal(e) {
+  if (!e || e.target === document.getElementById('oop-modal') || e.target.classList.contains('btn-close')) {
+    document.getElementById('oop-modal').classList.remove('active');
+  }
+}
+</script>
+</body>
+</html>
