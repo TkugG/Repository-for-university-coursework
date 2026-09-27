@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PetCare Nutrition Studio — ระบบคำนวณสารอาหารสัตว์เลี้ยง</title>
+  <link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+
+  <!-- HEADER BAR & AUTH CONTROLS -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="header-brand">
+        <div class="brand-logo-box">🐾</div>
+        <div>
+          <div class="brand-title">PetCare Nutrition Studio</div>
+          <div class="brand-subtitle">ระบบคำนวณโภชนาการสำหรับคนรักสัตว์</div>
+        </div>
+      </div>
+      
+      <div id="auth-controls" class="header-presets">
+        <!-- แสดงเมื่อยังไม่ได้ล็อกอิน -->
+        <div id="guest-tools" style="display: flex; gap: 8px;">
+          <button type="button" class="btn-preset" onclick="openModal('login-modal')">เข้าสู่ระบบ</button>
+          <button type="button" class="btn-preset" onclick="openModal('register-modal')">สมัครสมาชิก</button>
+        </div>
+        <!-- แสดงเมื่อล็อกอินแล้ว -->
+        <div id="user-tools" style="display: none;" class="user-profile-menu">
+          <button type="button" class="btn-preset" onclick="openMyPetsModal()">🐶🐱 สัตว์เลี้ยงของฉัน</button>
+          <span id="user-display-name" class="user-name-tag"></span>
+          <button type="button" class="btn-logout" onclick="logout()">ออกจากระบบ</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT GRID -->
+  <main class="main-container">
+    <div class="studio-grid">
+      
+      <!-- FORM PANEL (ฝั่งซ้าย) -->
+      <div class="card-box">
+        <div class="card-header">
+          <span class="card-title">กรอกข้อมูลน้องสุนัข & แมว 📝</span>
+          <span class="badge-pink">AAFCO Standard</span>
+        </div>
+        
+        <form class="card-body" onsubmit="event.preventDefault(); runCalc();">
+          
+          <!-- 1. ชนิดสัตว์เลี้ยง & สรีระ -->
+          <div class="section-group">
+            <div class="section-title">1. ชนิดสัตว์เลี้ยง</div>
+            <div class="section-sub">เลือกประเภทเพื่อคำนวณพลังงานที่เหมาะสม</div>
+            
+            <div class="species-grid">
+              <div id="tab-dog" class="species-card active" onclick="setSpecies('dog')">
+                <span class="species-icon">🐶</span>
+                <div>
+                  <div class="species-name">สุนัข (Canine)</div>
+                  <div class="species-desc">ตามสายพันธุ์และกิจกรรม</div>
+                </div>
+              </div>
+              <div id="tab-cat" class="species-card" onclick="setSpecies('cat')">
+                <span class="species-icon">🐱</span>
+                <div>
+                  <div class="species-name">แมว (Feline)</div>
+                  <div class="species-desc">ตามพฤติกรรมเลี้ยงดู</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-field">
+                <label>ชื่อน้อง</label>
+                <input type="text" id="pet-name" class="form-control" value="บัดดี้" oninput="runCalc()">
+              </div>
+              <div class="form-field">
+                <label>น้ำหนักตัว</label>
+                <div class="number-input-group">
+                  <button type="button" onclick="stepWeight(-0.5)">−</button>
+                  <input type="number" id="pet-weight" value="10.0" step="0.1" oninput="runCalc()">
+                  <span class="unit-text">kg</span>
+                  <button type="button" onclick="stepWeight(0.5)">+</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- ช่วงวัย -->
+            <div class="form-field">
+              <label>ช่วงวัย</label>
+              <div class="segmented-pill-group">
+                <label class="pill-btn"><input type="radio" name="age-stage" value="pup" onchange="runCalc()"><span class="pill-box">ลูกสัตว์ (วัยโต)</span></label>
+                <label class="pill-btn"><input type="radio" name="age-stage" value="adult" checked onchange="runCalc()"><span class="pill-box">โตเต็มวัย (Adult)</span></label>
+                <label class="pill-btn"><input type="radio" name="age-stage" value="senior" onchange="runCalc()"><span class="pill-box">สูงวัย (Senior)</span></label>
+              </div>
+            </div>
+
+            <!-- ระดับกิจกรรมประจำวัน -->
+            <div class="form-field" style="margin-top: 12px;">
+              <label>ระดับกิจกรรมประจำวัน</label>
+              <div class="segmented-pill-group">
+                <label class="pill-btn"><input type="radio" name="activity-level" value="low" onchange="runCalc()"><span class="pill-box">กิจกรรมน้อย</span></label>
+                <label class="pill-btn"><input type="radio" name="activity-level" value="normal" checked onchange="runCalc()"><span class="pill-box">กิจกรรมปกติ</span></label>
+                <label class="pill-btn"><input type="radio" name="activity-level" value="high" onchange="runCalc()"><span class="pill-box">คึกคักมาก</span></label>
+              </div>
+            </div>
+
+            <!-- ทำหมัน & ขนาดสายพันธุ์ -->
+            <div class="form-row-2" style="margin-top: 12px; align-items: center;">
+              <div class="form-field">
+                <label class="checkbox-container" style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff;">
+                  <input type="checkbox" id="is-neutered" onchange="runCalc()" style="width: 18px; height: 18px; accent-color: #14b8a6;">
+                  <span>ทำหมันแล้ว (Neutered)</span>
+                </label>
+              </div>
+              
+              <div class="form-field">
+                <label>ขนาดสายพันธุ์</label>
+                <select id="breed-size" class="form-control" onchange="runCalc()">
+                  <option value="small">พันธุ์เล็ก (&lt; 10 kg)</option>
+                  <option value="medium" selected>พันธุ์กลาง (10 - 25 kg)</option>
+                  <option value="large">พันธุ์ใหญ่ (&gt; 25 kg)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. ข้อมูลอาหาร -->
+          <div class="section-group">
+            <div class="section-title">2. ข้อมูลอาหาร</div>
+            <div class="section-sub">ระบุประเภทอาหารและพลังงานต่อ 100 กรัมตามฉลากจริง</div>
+
+            <div class="form-row-2">
+              <div class="form-field">
+                <label>ประเภทอาหาร</label>
+                <div class="segmented-pill-group">
+                  <label class="pill-btn"><input type="radio" name="food-type" value="dry" onchange="runCalc()"><span class="pill-box">อาหารเม็ด (Dry)</span></label>
+                  <label class="pill-btn"><input type="radio" name="food-type" value="wet" checked onchange="runCalc()"><span class="pill-box">อาหารเปียก (Wet)</span></label>
+                </div>
+              </div>
+              <div class="form-field">
+                <label>พลังงาน (kcal / 100g)</label>
+                <input type="number" id="food-cal" class="form-control" value="85" oninput="runCalc()">
+              </div>
+            </div>
+
+            <div class="quick-presets-row" style="margin-top: 8px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+              <span style="font-size: 0.75rem; color: var(--text-muted);">ค่าตามท้องตลาด:</span>
+              <button type="button" class="btn-chip" onclick="setKcal(360)">เม็ดมาตรฐาน (360)</button>
+              <button type="button" class="btn-chip" onclick="setKcal(385)">เม็ดลูกสัตว์ (385)</button>
+              <button type="button" class="btn-chip" onclick="setKcal(85)">เปียกเพาช์ (85)</button>
+              <button type="button" class="btn-chip" onclick="setKcal(95)">เปียกกระป๋อง (95)</button>
+            </div>
+          </div>
+
+          <!-- 3. จัดมื้ออาหาร -->
+          <div class="section-group">
+            <div class="section-title">3. จัดมื้ออาหาร</div>
+            <div class="form-row-2">
+              <div class="form-field">
+                <label>จำนวนมื้อต่อวัน</label>
+                <div class="segmented-pill-group">
+                  <label class="pill-btn"><input type="radio" name="meals-count" value="1" onchange="runCalc()"><span class="pill-box">1 มื้อ</span></label>
+                  <label class="pill-btn"><input type="radio" name="meals-count" value="2" checked onchange="runCalc()"><span class="pill-box">2 มื้อ ⭐</span></label>
+                  <label class="pill-btn"><input type="radio" name="meals-count" value="3" onchange="runCalc()"><span class="pill-box">3 มื้อ</span></label>
+                  <label class="pill-btn"><input type="radio" name="meals-count" value="4" onchange="runCalc()"><span class="pill-box">4 มื้อ</span></label>
+                </div>
+              </div>
+              <div class="form-field">
+                <label>มื้อแรกเวลา</label>
+                <input type="time" id="start-time" class="form-control" value="08:00" onchange="runCalc()">
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-submit">คำนวณแผนอาหารใหม่อีกครั้ง ➔</button>
+          
+          <!-- ปุ่มบันทึกข้อมูล และ ปุ่มเพิ่มสัตว์เลี้ยงใหม่ -->
+          <div id="save-btn-container" style="margin-top: 10px; display: flex; gap: 8px;">
+            <button type="button" class="btn-submit" style="background: linear-gradient(135deg, #2dd4bf, #14b8a6); flex: 1;" onclick="savePetData()">💾 บันทึกข้อมูล</button>
+            <button type="button" class="btn-preset" style="padding: 10px;" onclick="resetPetForm()">➖ ล้างฟอร์ม</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- RESULT DASHBOARD (ฝั่งขวา) -->
+      <div class="card-box">
+        <div class="card-header">
+          <span class="card-title">สรุปแผนโภชนาการประจำวัน 💖</span>
+          <span id="badge-pet-info" class="badge-pink">บัดดี้ (10.0 kg)</span>
+        </div>
+
+        <div class="card-body">
+          <div class="metrics-grid">
+            <div class="metric-card mint">
+              <div class="metric-label">ปริมาณรวมต่อวัน</div>
+              <div class="metric-value" id="res-daily-grams">0</div>
+              <div class="metric-sub">กรัม / วัน</div>
+            </div>
+            <div class="metric-card pink">
+              <div class="metric-label">ปริมาณต่อมื้อ</div>
+              <div class="metric-value" id="res-meal-grams">0</div>
+              <div class="metric-sub" id="res-meal-sub">กรัม / มื้อ</div>
+            </div>
+          </div>
+
+          <div class="timeline-box">
+            <div class="timeline-header">
+              <span>⏰ ตารางเวลามื้ออาหาร</span>
+              <span style="font-weight: normal; font-size: 0.7rem; color: var(--text-muted);">ช่วงเวลากลางวัน</span>
+            </div>
+            <div id="timeline-list"></div>
+          </div>
+
+          <div class="energy-box">
+            <div class="energy-title">📊 รายละเอียดพลังงานแคลอรี่ (AAFCO/NRC)</div>
+            <div class="energy-grid">
+              <div class="energy-item">
+                <div class="lbl">RER ขั้นต่ำ</div>
+                <div class="val" id="res-rer">0</div>
+                <div class="lbl">kcal/วัน</div>
+              </div>
+              <div class="energy-item">
+                <div class="lbl">ตัวคูณ Factor</div>
+                <div class="val" id="res-factor">1.6x</div>
+                <div class="lbl">ตามสรีระ</div>
+              </div>
+              <div class="energy-item highlight">
+                <div class="lbl">DER ต้องการจริง</div>
+                <div class="val" id="res-der">0</div>
+                <div class="lbl">kcal/วัน</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="advice-banner">
+            💧 <b>คำแนะนำน้ำดื่ม:</b> ควรเตรียมน้ำสะอาดให้ <span id="res-water-name">บัดดี้</span> จิบตลอดวัน (~<span id="res-water-val">550</span> ml/วัน)
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- MODALS -->
+
+  <!-- 1. MODAL: เข้าสู่ระบบ -->
+  <div id="login-modal" class="modal-overlay">
+    <div class="modal-card">
+      <h3>เข้าสู่ระบบ 🐾</h3>
+      <form onsubmit="handleLogin(event)">
+        <div class="form-field">
+          <label>อีเมล</label>
+          <input type="email" id="login-email" class="form-control" required>
+        </div>
+        <div class="form-field">
+          <label>รหัสผ่าน</label>
+          <input type="password" id="login-password" class="form-control" required>
+        </div>
+        <button type="submit" class="btn-submit">เข้าสู่ระบบ</button>
+        <button type="button" class="btn-cancel" onclick="closeModal('login-modal')">ยกเลิก</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2. MODAL: สมัครสมาชิก -->
+  <div id="register-modal" class="modal-overlay">
+    <div class="modal-card">
+      <h3>สมัครสมาชิกใหม่ ✨</h3>
+      <form onsubmit="handleRegister(event)">
+        <div class="form-field">
+          <label>ชื่อ-นามสกุล / ชื่อเรียก</label>
+          <input type="text" id="reg-name" class="form-control" required>
+        </div>
+        <div class="form-field">
+          <label>อีเมล</label>
+          <input type="email" id="reg-email" class="form-control" required>
+        </div>
+        <div class="form-field">
+          <label>รหัสผ่าน</label>
+          <input type="password" id="reg-password" class="form-control" required>
+        </div>
+        <button type="submit" class="btn-submit">สมัครสมาชิก</button>
+        <button type="button" class="btn-cancel" onclick="closeModal('register-modal')">ยกเลิก</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 3. MODAL: สัตว์เลี้ยงของฉัน -->
+  <div id="mypets-modal" class="modal-overlay">
+    <div class="modal-card wide">
+      <h3>🐶🐱 สัตว์เลี้ยงที่บันทึกไว้</h3>
+      <div id="pets-list-container" class="pets-grid-list">
+        <!-- รายการสัตว์เลี้ยงจะดึงมาจาก API -->
+      </div>
+      <button type="button" class="btn-cancel" onclick="closeModal('mypets-modal')">ปิดหน้าต่าง</button>
+    </div>
+  </div>
+
+  <footer class="app-footer">
+    PetCare Nutrition Studio • พัฒนาด้วย Clean OOP PHP & Modern UI
+  </footer>
+
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
