@@ -1,0 +1,20 @@
+{
+    "name": "helpdesk/smart-it-helpdesk",
+    "description": "Smart IT Helpdesk & Notification System - Custom OOP PHP MVC",
+    "type": "project",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "require": {
+        "php": ">=8.2",
+        "phpmailer/phpmailer": "^6.9"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true
+    }
+}
