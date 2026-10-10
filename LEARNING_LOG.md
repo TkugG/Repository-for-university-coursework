@@ -52,4 +52,19 @@
     * **File Upload Handling:** ตรวจสอบไฟล์ด้วย `$_FILES['image']`, ใช้ `uniqid()` เปลี่ยนชื่อไฟล์เพื่อไม่ให้ชื่อซ้ำกัน, และย้ายไฟล์ไปไว้ในโฟลเดอร์ `uploads/` ด้วย `move_uploaded_file()`
     * **HTTP Status Codes:** ตอบกลับ `201 Created` เมื่อสร้างสำเร็จ, `400 Bad Request` เมื่อข้อมูลไม่ครบ (เช่น ลืมใส่ title)
 
-- [ ] **Step 5:** ระบบจัดการ To-Do List (ติ๊กถูก/ลบ/แจ้งเตือน)
+- [x] **Step 5:** ระบบจัดการ To-Do List (ติ๊กถูก/ลบ/แจ้งเตือน)
+  * **สิ่งที่ได้เรียนรู้:**
+    * **Single Responsibility คลาส TodoItem:** แยกคลาส `models/TodoItem.php` ออกมาเพื่อจัดการข้อย่อยโดยเฉพาะ ไม่นำไปปนกับ `Note.php`
+    * **State Toggling:** ฟังก์ชัน `toggle($id, $is_done)` อัปเดตสถานะการทำงานผ่าน SQL แบบเรียบง่าย
+    * **In-App Reminders Logic:** ฟังก์ชัน `getReminders()` คัดกรองเฉพาะโน๊ตประเภท `todo` ที่มีเวลาแจ้งเตือน (`reminder_at`) โดยใช้เงื่อนไขช่วงเวลา เพื่อส่งให้หน้าบ้านเด้งแจ้งเตือนผู้ใช้ทันทีที่เปิดเว็บ
+
+---
+
+## 🚀 สรุปสถานะปัจจุบันของระบบหลังบ้าน (Backend Ready!)
+ระบบฝั่ง **Backend (PHP OOP + MySQL + REST API)** พัฒนาเสร็จสมบูรณ์ 100% พร้อมให้ Frontend ยิงเชื่อมต่อได้แล้ว:
+1. `GET /api/notes.php`: ดึงโน๊ตทั้งหมด (รองรับ `?sort=`, `?category_id=`, `?keyword=`)
+2. `GET /api/notes.php?reminders=1`: ดึงโน๊ตที่ถึงกำหนดแจ้งเตือน
+3. `POST /api/notes.php`: บันทึกโน๊ตใหม่ (รองรับทั้ง Text, To-Do, รูปภาพ และสีการ์ด 5 สี)
+4. `DELETE /api/notes.php?id=X`: ลบโน๊ต
+5. `POST /api/todo_items.php`: ติ๊กถูก To-Do Item (`action=toggle`) หรือเพิ่มข้อย่อย
+6. `DELETE /api/todo_items.php?id=X`: ลบข้อย่อย To-Do

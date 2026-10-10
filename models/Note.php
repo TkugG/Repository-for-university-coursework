@@ -132,4 +132,29 @@ class Note {
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         return $stmt->execute();
     }
+
+    /**
+     * ดึงโน๊ต To-Do ที่มีกำหนดแจ้งเตือนในเร็วๆ นี้ (Reminder)
+     * @return array
+     */
+    public function getReminders() {
+        $query = "SELECT n.*, c.name AS category_name 
+                  FROM " . $this->table . " n 
+                  LEFT JOIN categories c ON n.category_id = c.id 
+                  WHERE n.type = 'todo' 
+                    AND n.reminder_at IS NOT NULL 
+                    AND n.reminder_at >= NOW() - INTERVAL 1 HOUR 
+                  ORDER BY n.reminder_at ASC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        $notes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($notes as &$note) {
+            $itemStmt = $this->conn->prepare("SELECT id, item_text, is_done FROM todo_items WHERE note_id = :note_id");
+            $itemStmt->execute([':note_id' => $note['id']]);
+            $note['items'] = $itemStmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+
+        return $notes;
+    }
 }

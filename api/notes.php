@@ -31,6 +31,17 @@ $method = $_SERVER['REQUEST_METHOD'];
 // 3. จัดการคำขอตาม HTTP Method
 switch ($method) {
     case 'GET':
+        // ถ้าต้องการเฉพาะโน๊ตที่มีการแจ้งเตือน (Reminder)
+        if (isset($_GET['reminders'])) {
+            $reminders = $note->getReminders();
+            echo json_encode([
+                "success" => true,
+                "count" => count($reminders),
+                "data" => $reminders
+            ], JSON_UNESCAPED_UNICODE);
+            break;
+        }
+
         // ดึงพารามิเตอร์จาก URL เช่น ?sort=ASC&category_id=2&keyword=งาน
         $sort = isset($_GET['sort']) ? $_GET['sort'] : 'DESC';
         $categoryId = !empty($_GET['category_id']) ? intval($_GET['category_id']) : null;
