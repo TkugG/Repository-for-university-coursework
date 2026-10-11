@@ -3,15 +3,196 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>แอปจดโน๊ต & To-Do</title>
+  <title>Smart Note & To-Do List</title>
+  
+  <!-- ฟอนต์ Prompt และไอคอน FontAwesome -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
-  <!-- จุดเริ่มต้นสำหรับเพื่อนทำ Frontend -->
-  <header>
-    <h1>ยินดีต้อนรับสู่ Note App</h1>
-    <p>กำลังเตรียมพื้นที่สำหรับ Frontend</p>
+
+  <!-- แถบด้านบน (Navbar) -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="logo">
+        <div class="logo-icon"><i class="fa-solid fa-note-sticky"></i></div>
+        <div class="logo-text">
+          <h1>NoteCraft</h1>
+          <span>บันทึก & รายการสิ่งที่ต้องทำ</span>
+        </div>
+      </div>
+
+      <!-- ช่องค้นหา Real-time -->
+      <div class="search-box">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="searchInput" placeholder="ค้นหาบันทึก หรือสิ่งที่ต้องทำ...">
+      </div>
+
+      <!-- ปุ่มสร้างโน๊ต -->
+      <button class="btn btn-create" onclick="openCreateModal()">
+        <i class="fa-solid fa-plus"></i>
+        <span>สร้างโน๊ตใหม่</span>
+      </button>
+    </div>
   </header>
+
+  <!-- เนื้อหาหลัก (Layout สองฝั่ง) -->
+  <div class="main-wrapper">
+    
+    <!-- เมนูด้านข้าง (Sidebar) -->
+    <aside class="sidebar">
+      <div class="sidebar-group">
+        <span class="group-title">หมวดหมู่</span>
+        <button class="nav-btn active" onclick="filterCategory('', this)">
+          <i class="fa-regular fa-folder-open icon-all"></i> ทุกหมวดหมู่
+        </button>
+        <button class="nav-btn" onclick="filterCategory('1', this)">
+          <span class="dot-badge cat-yellow"></span> 1: ทั่วไป
+        </button>
+        <button class="nav-btn" onclick="filterCategory('2', this)">
+          <span class="dot-badge cat-blue"></span> 2: การเรียน
+        </button>
+        <button class="nav-btn" onclick="filterCategory('3', this)">
+          <span class="dot-badge cat-green"></span> 3: งาน
+        </button>
+        <button class="nav-btn" onclick="filterCategory('4', this)">
+          <span class="dot-badge cat-pink"></span> 4: ส่วนตัว
+        </button>
+      </div>
+
+      <div class="sidebar-group">
+        <span class="group-title">รูปแบบโน๊ต</span>
+        <button class="nav-btn" onclick="filterType('all', this)">
+          <i class="fa-solid fa-border-all"></i> ทั้งหมด
+        </button>
+        <button class="nav-btn" onclick="filterType('text', this)">
+          <i class="fa-regular fa-file-lines"></i> บันทึกข้อความ
+        </button>
+        <button class="nav-btn" onclick="filterType('todo', this)">
+          <i class="fa-solid fa-list-check"></i> เช็คลิสต์ To-Do
+        </button>
+      </div>
+    </aside>
+
+    <!-- พื้นที่แสดงการ์ดโน๊ต 5 สี -->
+    <main class="content-panel">
+      <div class="panel-header">
+        <div>
+          <h2 id="viewHeading">โน๊ตทั้งหมด</h2>
+          <p id="viewSub">จัดการความคิดและงานของคุณได้ในที่เดียว</p>
+        </div>
+        <span class="count-tag" id="noteCountTag">0 บันทึก</span>
+      </div>
+
+      <!-- กล่องวางการ์ด -->
+      <div id="notesGrid" class="notes-grid"></div>
+    </main>
+
+  </div>
+
+  <!-- หน้าต่าง Modal (สำหรับทั้งสร้างใหม่ และ แก้ไข) -->
+  <div id="noteModal" class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-top">
+        <h3 id="modalHeading"><i class="fa-solid fa-pen-nib"></i> เขียนโน๊ตใหม่</h3>
+        <button class="close-btn" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <form id="noteForm" onsubmit="saveNote(event)">
+        <!-- ช่องเก็บ ID สำหรับเวลาแก้ไข -->
+        <input type="hidden" name="id" id="editNoteId" value="">
+
+        <!-- สลับประเภท Text / To-Do -->
+        <div class="type-toggle">
+          <button type="button" class="toggle-btn active" id="btnTypeText" onclick="selectType('text')">
+            <i class="fa-regular fa-file-lines"></i> โน๊ตข้อความ
+          </button>
+          <button type="button" class="toggle-btn" id="btnTypeTodo" onclick="selectType('todo')">
+            <i class="fa-solid fa-list-check"></i> รายการสิ่งที่ต้องทำ (To-Do)
+          </button>
+          <input type="hidden" name="type" id="noteType" value="text">
+        </div>
+
+        <div class="form-item">
+          <label>หัวข้อโน๊ต <span class="required">*</span></label>
+          <input type="text" name="title" id="noteTitleInput" required placeholder="เช่น สรุปเนื้อหาสอบ, สิ่งที่ต้องทำวันนี้...">
+        </div>
+
+        <div class="form-item">
+          <label>หมวดหมู่</label>
+          <select name="category_id" id="noteCatSelect">
+            <option value="1">1: ทั่วไป (General)</option>
+            <option value="2">2: การเรียน (Study)</option>
+            <option value="3">3: งาน (Work)</option>
+            <option value="4">4: ส่วนตัว (Personal)</option>
+          </select>
+        </div>
+
+        <!-- กล่องสำหรับ Text Note -->
+        <div id="textSection">
+          <div class="form-item">
+            <label>เนื้อหาบันทึก</label>
+            <textarea name="content" id="noteContentInput" rows="4" placeholder="พิมพ์เนื้อหารายละเอียดโน๊ตของคุณที่นี่..."></textarea>
+          </div>
+          <div class="form-item">
+            <label>แนบรูปภาพ</label>
+            <input type="file" name="image" accept="image/*" class="file-input">
+          </div>
+        </div>
+
+        <!-- กล่องสำหรับ To-Do Note -->
+        <div id="todoSection" style="display: none;">
+          <div class="form-item">
+            <label>วันและเวลาที่ต้องการแจ้งเตือน</label>
+            <input type="datetime-local" name="reminder_at" id="noteReminderInput">
+          </div>
+          <div class="form-item">
+            <label>รายการสิ่งที่ต้องทำ (คั่นแต่ละข้อด้วยเครื่องหมายจุลภาค ,)</label>
+            <input type="text" id="todoInput" placeholder="เช่น ทบทวนบทที่ 1, ทำการบ้านส่ง, ซื้อปากกา">
+          </div>
+        </div>
+
+        <!-- เลือกสีการ์ด 5 สีพาสเทล -->
+        <div class="form-item">
+          <label>เลือกสีการ์ดพาสเทล</label>
+          <div class="color-picker-row">
+            <label class="color-swatch">
+              <input type="radio" name="color" value="#fef08a" checked>
+              <span class="swatch-circle" style="background: #fef08a;" title="สีเหลือง"></span>
+            </label>
+            <label class="color-swatch">
+              <input type="radio" name="color" value="#bbf7d0">
+              <span class="swatch-circle" style="background: #bbf7d0;" title="สีเขียว"></span>
+            </label>
+            <label class="color-swatch">
+              <input type="radio" name="color" value="#bfdbfe">
+              <span class="swatch-circle" style="background: #bfdbfe;" title="สีฟ้า"></span>
+            </label>
+            <label class="color-swatch">
+              <input type="radio" name="color" value="#fbcfe8">
+              <span class="swatch-circle" style="background: #fbcfe8;" title="สีชมพู"></span>
+            </label>
+            <label class="color-swatch">
+              <input type="radio" name="color" value="#e9d5ff">
+              <span class="swatch-circle" style="background: #e9d5ff;" title="สีม่วง"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" onclick="closeModal()">ยกเลิก</button>
+          <button type="submit" class="btn-save" id="btnSaveSubmit">
+            <i class="fa-solid fa-check"></i> บันทึกโน๊ต
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
 
   <script src="assets/js/app.js"></script>
 </body>

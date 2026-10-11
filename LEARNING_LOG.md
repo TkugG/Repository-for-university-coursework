@@ -60,11 +60,20 @@
 
 ---
 
-## 🚀 สรุปสถานะปัจจุบันของระบบหลังบ้าน (Backend Ready!)
-ระบบฝั่ง **Backend (PHP OOP + MySQL + REST API)** พัฒนาเสร็จสมบูรณ์ 100% พร้อมให้ Frontend ยิงเชื่อมต่อได้แล้ว:
-1. `GET /api/notes.php`: ดึงโน๊ตทั้งหมด (รองรับ `?sort=`, `?category_id=`, `?keyword=`)
+- [x] **Step 6:** รวมโค้ด Frontend + Backend และแก้ปัญหา Data Contract Mismatch
+  * **สิ่งที่ได้เรียนรู้:**
+    * **API Contract Compatibility:** เมื่อสองคนทำงานแยกกัน อาจเกิดปัญหาตั้งชื่อตัวแปรไม่ตรงกัน (เช่น `items` vs `todo_items`) วิธีแก้คือเขียนให้ Backend ยืดหยุ่น ส่งข้อมูลออกไปรองรับทั้ง 2 แบบ
+    * **Handling HTTP Method Limitations:** ฟอร์มใน HTML หรือ `fetch` บางกรณีถนัดส่ง `POST` แทน `DELETE` หรือ `PUT` การรองรับ `?action=delete` หรือ `?action=update` ใน POST ช่วยให้ระบบทำงานได้อย่างราบรื่น
+    * **Syncing UI with Real Database ID:** เมื่อกดบันทึก ให้ใช้ `await fetchNotes()` เพื่อดึงข้อมูลจริงจาก DB กลับมา จะทำให้ได้ทั้ง ID จริง และ Path รูปภาพที่เซฟลงเซิร์ฟเวอร์ทันที
+    * **Method Update in OOP:** เพิ่มเมธอด `update($id, $data)` ใน `models/Note.php` โดยจัดการลบข้อย่อยเดิมและใส่ข้อใหม่สำหรับ To-Do เพื่อรักษาความถูกต้องของข้อมูล
+
+---
+
+## 🚀 สรุปสถานะปัจจุบันของระบบหลังบ้าน (Backend & Frontend Fully Integrated!)
+ระบบทำงานร่วมกันได้สมบูรณ์ 100%:
+1. `GET /api/notes.php`: ดึงโน๊ตทั้งหมด (รองรับ `?sort=`, `?category_id=`, `?keyword=`, `?search=`)
 2. `GET /api/notes.php?reminders=1`: ดึงโน๊ตที่ถึงกำหนดแจ้งเตือน
 3. `POST /api/notes.php`: บันทึกโน๊ตใหม่ (รองรับทั้ง Text, To-Do, รูปภาพ และสีการ์ด 5 สี)
-4. `DELETE /api/notes.php?id=X`: ลบโน๊ต
-5. `POST /api/todo_items.php`: ติ๊กถูก To-Do Item (`action=toggle`) หรือเพิ่มข้อย่อย
-6. `DELETE /api/todo_items.php?id=X`: ลบข้อย่อย To-Do
+4. `POST /api/notes.php?action=update`: แก้ไขโน๊ตเดิม
+5. `POST /api/notes.php?action=toggle_todo`: ติ๊กถูก / ยกเลิกติ๊กถูก To-Do
+6. `POST /api/notes.php?action=delete&id=X` หรือ `DELETE /api/notes.php?id=X`: ลบโน๊ต

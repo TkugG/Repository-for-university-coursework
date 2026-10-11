@@ -42,7 +42,7 @@ class Note {
 
         $params = [];
 
-        // ถ้ามีการเลือกหมวดหมู่ (จากเมนู Hamburger)
+        // ถ้ามีการเลือกหมวดหมู่ (จากเมนู Hamburger หรือ Sidebar)
         if (!empty($category_id)) {
             $query .= " AND n.category_id = :category_id ";
             $params[':category_id'] = $category_id;
@@ -50,7 +50,7 @@ class Note {
 
         // ถ้ามีการค้นหาหัวข้อ (จากช่อง Search)
         if (!empty($keyword)) {
-            $query .= " AND n.title LIKE :keyword ";
+            $query .= " AND (n.title LIKE :keyword OR n.content LIKE :keyword) ";
             $params[':keyword'] = "%" . $keyword . "%";
         }
 
@@ -62,14 +62,17 @@ class Note {
         $stmt->execute($params);
         $notes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // หากโน๊ตเป็นแบบ 'todo' ให้ดึงรายการย่อย (todo_items) มาแนบไปด้วย
+        // หากโน๊ตเป็นแบบ 'todo' ให้ดึงรายการย่อยมาแนบทั้ง items และ todo_items เพื่อรองรับ Frontend
         foreach ($notes as &$note) {
             if ($note['type'] === 'todo') {
                 $itemStmt = $this->conn->prepare("SELECT id, item_text, is_done FROM todo_items WHERE note_id = :note_id");
                 $itemStmt->execute([':note_id' => $note['id']]);
-                $note['items'] = $itemStmt->fetchAll(PDO::FETCH_ASSOC);
+                $items = $itemStmt->fetchAll(PDO::FETCH_ASSOC);
+                $note['items'] = $items;
+                $note['todo_items'] = $items; // รองรับ Frontend ที่เรียกหา todo_items
             } else {
                 $note['items'] = [];
+                $note['todo_items'] = [];
             }
         }
 
@@ -100,12 +103,20 @@ class Note {
         if ($stmt->execute()) {
             $noteId = $this->conn->lastInsertId();
 
-            // ถ้าเป็นโน๊ต To-Do และมีรายการย่อยส่งมา ให้บันทึกลงตาราง todo_items ด้วย
-            if (!empty($data['type']) && $data['type'] === 'todo' && !empty($data['items']) && is_array($data['items'])) {
+            // รองรับทั้ง items (Array) และ todo_items (Array หรือ JSON String)
+            $todoItems = [];
+            if (!empty($data['todo_items'])) {
+                $todoItems = is_array($data['todo_items']) ? $data['todo_items'] : json_decode($data['todo_items'], true);
+            } elseif (!empty($data['items'])) {
+                $todoItems = is_array($data['items']) ? $data['items'] : json_decode($data['items'], true);
+            }
+
+            if (!empty($data['type']) && $data['type'] === 'todo' && !empty($todoItems) && is_array($todoItems)) {
                 $itemQuery = "INSERT INTO todo_items (note_id, item_text, is_done) VALUES (:note_id, :item_text, 0)";
                 $itemStmt = $this->conn->prepare($itemQuery);
 
-                foreach ($data['items'] as $itemText) {
+                foreach ($todoItems as $item) {
+                    $itemText = is_array($item) ? ($item['item_text'] ?? '') : $item;
                     if (trim($itemText) !== '') {
                         $itemStmt->execute([
                             ':note_id' => $noteId,
@@ -119,6 +130,71 @@ class Note {
         }
 
         return false;
+    }
+
+    /**
+     * แก้ไขโน๊ตเดิม (Update)
+     * @param int $id
+     * @param array $data
+     * @return bool
+     */
+    public function update($id, $data) {
+        $query = "UPDATE " . $this->table . " 
+                  SET category_id = :category_id,
+                      title = :title,
+                      type = :type,
+                      content = :content,
+                      color = :color,
+                      reminder_at = :reminder_at ";
+
+        if (!empty($data['image'])) {
+            $query .= ", image = :image ";
+        }
+        $query .= " WHERE id = :id";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindValue(':category_id', !empty($data['category_id']) ? $data['category_id'] : null, PDO::PARAM_INT);
+        $stmt->bindValue(':title', $data['title']);
+        $stmt->bindValue(':type', !empty($data['type']) ? $data['type'] : 'text');
+        $stmt->bindValue(':content', !empty($data['content']) ? $data['content'] : null);
+        $stmt->bindValue(':color', !empty($data['color']) ? $data['color'] : '#ffffff');
+        $stmt->bindValue(':reminder_at', !empty($data['reminder_at']) ? $data['reminder_at'] : null);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+
+        if (!empty($data['image'])) {
+            $stmt->bindValue(':image', $data['image']);
+        }
+
+        $success = $stmt->execute();
+
+        // อัปเดตข้อย่อยของ To-Do ถ้ามีส่งมา
+        if ($success && !empty($data['type']) && $data['type'] === 'todo') {
+            $todoItems = [];
+            if (!empty($data['todo_items'])) {
+                $todoItems = is_array($data['todo_items']) ? $data['todo_items'] : json_decode($data['todo_items'], true);
+            } elseif (!empty($data['items'])) {
+                $todoItems = is_array($data['items']) ? $data['items'] : json_decode($data['items'], true);
+            }
+
+            if (!empty($todoItems) && is_array($todoItems)) {
+                // ลบรายการเดิมออกแล้วบันทึกใหม่
+                $delStmt = $this->conn->prepare("DELETE FROM todo_items WHERE note_id = :note_id");
+                $delStmt->execute([':note_id' => $id]);
+
+                $insStmt = $this->conn->prepare("INSERT INTO todo_items (note_id, item_text, is_done) VALUES (:note_id, :item_text, 0)");
+                foreach ($todoItems as $item) {
+                    $itemText = is_array($item) ? ($item['item_text'] ?? '') : $item;
+                    if (trim($itemText) !== '') {
+                        $insStmt->execute([
+                            ':note_id' => $id,
+                            ':item_text' => trim($itemText)
+                        ]);
+                    }
+                }
+            }
+        }
+
+        return $success;
     }
 
     /**
@@ -144,6 +220,7 @@ class Note {
                   WHERE n.type = 'todo' 
                     AND n.reminder_at IS NOT NULL 
                     AND n.reminder_at >= NOW() - INTERVAL 1 HOUR 
+                    AND n.reminder_at <= NOW() + INTERVAL 1 DAY 
                   ORDER BY n.reminder_at ASC";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
@@ -152,7 +229,9 @@ class Note {
         foreach ($notes as &$note) {
             $itemStmt = $this->conn->prepare("SELECT id, item_text, is_done FROM todo_items WHERE note_id = :note_id");
             $itemStmt->execute([':note_id' => $note['id']]);
-            $note['items'] = $itemStmt->fetchAll(PDO::FETCH_ASSOC);
+            $items = $itemStmt->fetchAll(PDO::FETCH_ASSOC);
+            $note['items'] = $items;
+            $note['todo_items'] = $items;
         }
 
         return $notes;
