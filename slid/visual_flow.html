@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>แผนภาพการไหลของข้อมูล (Visual Data Flow) - Note App</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --navy: #1e3a8a;
+      --blue: #2563eb;
+      --blue-light: #eff6ff;
+      --green: #10b981;
+      --green-light: #ecfdf5;
+      --purple: #8b5cf6;
+      --purple-light: #f5f3ff;
+      --amber: #f59e0b;
+      --amber-light: #fffbeb;
+      --border: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Prompt', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      padding: 40px 20px;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    header h1 {
+      font-size: 2.2rem;
+      color: var(--navy);
+      margin-bottom: 8px;
+    }
+
+    header p {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+    }
+
+    /* Architecture Grid */
+    .arch-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.3fr 1fr;
+      gap: 24px;
+      margin-bottom: 50px;
+      position: relative;
+    }
+
+    @media (max-width: 900px) {
+      .arch-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .zone-card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+
+    .zone-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .zone-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+    }
+
+    .frontend-zone .zone-icon { background: var(--blue-light); color: var(--blue); }
+    .backend-zone .zone-icon { background: var(--purple-light); color: var(--purple); }
+    .storage-zone .zone-icon { background: var(--green-light); color: var(--green); }
+
+    .zone-title h3 {
+      font-size: 1.2rem;
+      color: var(--text-main);
+    }
+
+    .zone-title span {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* Component Item inside Zone */
+    .comp-box {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 14px;
+      transition: all 0.2s;
+    }
+
+    .comp-box:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.05);
+      border-color: var(--blue);
+    }
+
+    .comp-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--navy);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .comp-badge {
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+
+    .badge-view { background: #e0f2fe; color: #0369a1; }
+    .badge-ctrl { background: #fef3c7; color: #b45309; }
+    .badge-model { background: #f3e8ff; color: #7e22ce; }
+    .badge-db { background: #dcfce7; color: #15803d; }
+
+    .comp-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* Flow Section */
+    .flow-section {
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 36px;
+      border: 1px solid var(--border);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.04);
+      margin-bottom: 40px;
+    }
+
+    .flow-title {
+      font-size: 1.5rem;
+      color: var(--navy);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .flow-subtitle {
+      color: var(--text-muted);
+      margin-bottom: 30px;
+    }
+
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      position: relative;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 24px;
+      top: 15px;
+      bottom: 15px;
+      width: 3px;
+      background: #e2e8f0;
+      z-index: 1;
+    }
+
+    .step-item {
+      display: flex;
+      gap: 20px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .step-num {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: white;
+      border: 3px solid var(--blue);
+      color: var(--blue);
+      font-weight: 700;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 4px 10px rgba(37,99,235,0.15);
+    }
+
+    .step-content {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 24px;
+      flex: 1;
+    }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .step-title {
+      font-weight: 600;
+      color: var(--navy);
+      font-size: 1.05rem;
+    }
+
+    .step-actor {
+      font-size: 0.8rem;
+      padding: 2px 10px;
+      border-radius: 20px;
+      background: white;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+
+    .step-detail {
+      font-size: 0.9rem;
+      color: var(--text-main);
+    }
+
+    .code-pill {
+      font-family: monospace;
+      background: #e2e8f0;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      color: #0f172a;
+    }
+
+    /* Defense Card */
+    .defense-box {
+      background: linear-gradient(135deg, #1e3a8a, #2563eb);
+      color: white;
+      border-radius: 16px;
+      padding: 28px;
+      margin-top: 30px;
+    }
+
+    .defense-box h3 {
+      font-size: 1.3rem;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .defense-box p {
+      font-size: 0.95rem;
+      opacity: 0.9;
+      line-height: 1.7;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <header>
+      <h1>🗺️ แผนผังการไหลของข้อมูล (Visual Data Flow)</h1>
+      <p>ระบบบันทึกและจัดการสิ่งที่ต้องทำ (Note & To-Do App) - สถาปัตยกรรม Decoupled MVC</p>
+    </header>
+
+    <!-- 3 ZONES ARCHITECTURE -->
+    <div class="arch-grid">
+      
+      <!-- ZONE 1: FRONTEND -->
+      <div class="zone-card frontend-zone">
+        <div class="zone-header">
+          <div class="zone-icon"><i class="fa-solid fa-desktop"></i></div>
+          <div class="zone-title">
+            <h3>1. ฝั่งหน้าบ้าน (Frontend)</h3>
+            <span>เพื่อนรับผิดชอบดูแล</span>
+          </div>
+        </div>
+
+        <div class="comp-box">
+          <div class="comp-name">
+            index.html <span class="comp-badge badge-view">View</span>
+          </div>
+          <div class="comp-desc">
+            หน้าจอเว็บหลัก: ฟอร์มสร้าง/แก้ไข, การ์ดสีพาสเทล 5 สี, แถบหมวดหมู่ และปุ่มค้นหา
+          </div>
+        </div>
+
+        <div class="comp-box">
+          <div class="comp-name">
+            assets/js/app.js <span class="comp-badge badge-view">Client Script</span>
+          </div>
+          <div class="comp-desc">
+            ดักจับตอนผู้ใช้กดปุ่ม ยิงคำขอ <span class="code-pill">fetch()</span> ไปหลังบ้าน และวาดการ์ดขึ้นจอ
+          </div>
+        </div>
+      </div>
+
+      <!-- ZONE 2: BACKEND -->
+      <div class="zone-card backend-zone">
+        <div class="zone-header">
+          <div class="zone-icon"><i class="fa-solid fa-gears"></i></div>
+          <div class="zone-title">
+            <h3>2. ฝั่งหลังบ้าน (Backend)</h3>
+            <span>คุณรับผิดชอบดูแล (PHP OOP)</span>
+          </div>
+        </div>
+
+        <div class="comp-box">
+          <div class="comp-name">
+            api/notes.php <span class="comp-badge badge-ctrl">Controller</span>
+          </div>
+          <div class="comp-desc">
+            เคาน์เตอร์รับคำขอ GET, POST, DELETE ตรวจข้อมูล เซฟไฟล์ภาพ แล้วสั่ง Model
+          </div>
+        </div>
+
+        <div class="comp-box">
+          <div class="comp-name">
+            models/Note.php <span class="comp-badge badge-model">Model</span>
+          </div>
+          <div class="comp-desc">
+            สมองจัดการโน๊ตหลัก: คำนวณ เพิ่ม ลบ แก้ไข ค้นหา และแจ้งเตือน
+          </div>
+        </div>
+
+        <div class="comp-box">
+          <div class="comp-name">
+            models/TodoItem.php <span class="comp-badge badge-model">Model</span>
+          </div>
+          <div class="comp-desc">
+            สมองจัดการข้อย่อย: ติ๊กถูกขีดฆ่า เพิ่มหรือลบข้อย่อย (Single Responsibility)
+          </div>
+        </div>
+
+        <div class="comp-box">
+          <div class="comp-name">
+            models/Database.php <span class="comp-badge badge-model">Connection</span>
+          </div>
+          <div class="comp-desc">
+            กุญแจต่อ MySQL ผ่าน PDO ซ่อนรหัสผ่านเป็น private (Encapsulation)
+          </div>
+        </div>
+      </div>
+
+      <!-- ZONE 3: STORAGE -->
+      <div class="zone-card storage-zone">
+        <div class="zone-header">
+          <div class="zone-icon"><i class="fa-solid fa-database"></i></div>
+          <div class="zone-title">
+            <h3>3. ที่จัดเก็บข้อมูล (Storage)</h3>
+            <span>ฐานข้อมูลและไฟล์</span>
+          </div>
+        </div>
+
+        <div class="comp-box">
+          <div class="comp-name">
+            MySQL Database <span class="comp-badge badge-db">database.sql</span>
+          </div>
+          <div class="comp-desc">
+            เก็บข้อมูล 3 ตาราง:<br>
+            • <span class="code-pill">categories</span> (หมวดหมู่)<br>
+            • <span class="code-pill">notes</span> (โน๊ตหลัก)<br>
+            • <span class="code-pill">todo_items</span> (รายการข้อย่อย)
+          </div>
+        </div>
+
+        <div class="comp-box">
+          <div class="comp-name">
+            uploads/ <span class="comp-badge badge-db">Folder</span>
+          </div>
+          <div class="comp-desc">
+            เก็บไฟล์รูปภาพที่ผู้ใช้อัปโหลด โดยถูกสุ่มชื่อใหม่ด้วย <span class="code-pill">uniqid()</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- STEP BY STEP FLOW -->
+    <div class="flow-section">
+      <div class="flow-title">
+        <i class="fa-solid fa-route" style="color: var(--blue);"></i>
+        สายพานจริง: "เมื่อผู้ใช้กดบันทึกโน๊ตใหม่บนหน้าเว็บ"
+      </div>
+      <div class="flow-subtitle">
+        ข้อมูลเดินทางเป็นลำดับ 6 ขั้นตอนตามนี้ จากหน้าจอวิ่งไปลงฐานข้อมูลแล้วเด้งกลับมา
+      </div>
+
+      <div class="timeline">
+        
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <div class="step-header">
+              <span class="step-title">ผู้ใช้กดปุ่ม "บันทึกโน๊ต" บนหน้าจอ</span>
+              <span class="step-actor">index.html + app.js</span>
+            </div>
+            <div class="step-detail">
+              JavaScript ดึงค่าจากฟอร์ม (หัวข้อ, ข้อความ, หมวดหมู่, รูปภาพ, สีการ์ด) ใส่ลงใน <span class="code-pill">FormData</span> แล้วสั่งยิง <span class="code-pill">fetch('api/notes.php', { method: 'POST' })</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <div class="step-header">
+              <span class="step-title">เคาน์เตอร์รับเรื่อง และตรวจสอบความถูกต้อง</span>
+              <span class="step-actor">api/notes.php</span>
+            </div>
+            <div class="step-detail">
+              Controller ตรวจสอบว่ามีหัวข้อครบไหม หากมีไฟล์รูปภาพส่งมา จะใช้ <span class="code-pill">uniqid('note_', true)</span> สุ่มชื่อไฟล์ใหม่ แล้วสั่งย้ายไปเก็บที่โฟลเดอร์ <span class="code-pill">uploads/</span> จากนั้นส่งข้อมูลต่อให้ Model
+            </div>
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <div class="step-header">
+              <span class="step-title">เรียกใช้งานคลาส Note ตามหลัก OOP</span>
+              <span class="step-actor">models/Note.php</span>
+            </div>
+            <div class="step-detail">
+              คลาส <span class="code-pill">Note</span> ขอยืมตัวเชื่อมต่อฐานข้อมูลจาก <span class="code-pill">Database.php</span> ผ่าน Constructor (หลัก Dependency Injection) เพื่อเตรียมเขียนคำสั่ง SQL
+            </div>
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <div class="step-header">
+              <span class="step-title">บันทึกข้อมูลลงฐานข้อมูลอย่างปลอดภัย</span>
+              <span class="step-actor">MySQL Database</span>
+            </div>
+            <div class="step-detail">
+              ส่งคำสั่ง <span class="code-pill">INSERT INTO notes ...</span> โดยใช้ Prepared Statements (<span class="code-pill">bindValue</span>) ป้องกันการโดนแฮก SQL Injection 100% ข้อมูลลงตารางจริงใน phpMyAdmin
+            </div>
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-num">5</div>
+          <div class="step-content">
+            <div class="step-header">
+              <span class="step-title">ตอบกลับผลลัพธ์เป็นมาตรฐาน JSON</span>
+              <span class="step-actor">api/notes.php -> app.js</span>
+            </div>
+            <div class="step-detail">
+              หลังบ้านส่งผลลัพธ์กลับเป็น JSON เช่น <span class="code-pill">{"success": true, "id": 5}</span> ผ่าน Header <span class="code-pill">application/json</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-num">6</div>
+          <div class="step-content">
+            <div class="step-header">
+              <span class="step-title">หน้าเว็บรีเฟรชการ์ดสีใบใหม่ขึ้นจอทันที</span>
+              <span class="step-actor">index.html</span>
+            </div>
+            <div class="step-detail">
+              หน้าเว็บรับ JSON แล้วสั่งวาดการ์ดใบใหม่สีพาสเทล พร้อมปุ่มแก้ไข ถังขยะลบ และ Checkbox ให้ผู้ใช้เห็นทันทีแบบไม่ต้องกดรีโหลดหน้าเว็บ!
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- DEFENSE BOX -->
+      <div class="defense-box">
+        <h3><i class="fa-solid fa-graduation-cap"></i> จุดพูดเอาคะแนนเต็มตอนพรีเซนต์:</h3>
+        <p>
+          "ระบบของเราแบ่งหน้าที่ตามหลัก <strong>Decoupled MVC</strong> ชัดเจนครับ หน้าบ้าน (View) ยิงคำขอผ่าน Fetch มาที่เคาน์เตอร์ API (Controller) และมีสมอง Model (PHP OOP) คอยจัดการฐานข้อมูล MySQL ข้อมูลเดินทางเป็นสายพาน 6 สเต็ป ทำให้โค้ดเป็นระเบียบ ปลอดภัย และทดสอบแยกส่วนได้ง่ายครับ"
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>

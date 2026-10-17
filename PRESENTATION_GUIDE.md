@@ -44,9 +44,68 @@ ProjectOOP/
 
 ---
 
-## 🔄 3. การเดินทางของข้อมูล (Data Flow: เมื่อผู้ใช้กดปุ่มบนเว็บ)
+## 🔄 3. การเดินทางของข้อมูล (Visual Data Flow & Sequence Diagram)
 
-### สถานการณ์ตัวอย่าง: "เมื่อผู้ใช้กดบันทึกโน๊ตใหม่"
+### 🗺️ แผนผังการไหลของข้อมูล (Architecture Flow)
+```mermaid
+flowchart TD
+    subgraph FRONTEND ["🖥️ ฝั่งหน้าบ้าน (Frontend - เพื่อนทำ)"]
+        UI["1. หน้าจอเว็บ (index.html)<br/>• ฟอร์มกรอกข้อความ / แนบรูปภาพ<br/>• การ์ด 5 สี / Checkbox"]
+        JS["2. สคริปต์ควบคุม (assets/js/app.js)<br/>• ดักจับตอนผู้ใช้กดปุ่ม<br/>• ยิง fetch('api/notes.php')<br/>• นำผลลัพธ์มาวาดการ์ดลงหน้าจอ"]
+        UI <--> JS
+    end
+
+    subgraph BACKEND ["⚙️ ฝั่งหลังบ้าน (Backend - คุณทำ)"]
+        API["3. ประตูด่านหน้า (api/notes.php)<br/>• รับคำขอ GET, POST, DELETE<br/>• ตรวจสอบความถูกต้อง (Validation)<br/>• สุ่มชื่อรูปและเซฟลง uploads/<br/>• สั่ง Model ให้ทำงาน"]
+        
+        subgraph MODELS ["โฟลเดอร์ models/ (PHP OOP)"]
+            NOTE["4. คลาส Note.php<br/>(สมองจัดการโน๊ตหลัก)<br/>• readAll(), create()<br/>• update(), delete()"]
+            TODO["5. คลาส TodoItem.php<br/>(สมองจัดการข้อย่อย)<br/>• toggle() ติ๊กถูกขีดฆ่า"]
+            DB["6. คลาส Database.php<br/>(ประตูสู่ MySQL)<br/>• ซ่อนรหัสผ่าน (Encapsulation)<br/>• เชื่อมต่อผ่าน PDO"]
+        end
+    end
+
+    subgraph STORAGE ["💾 การจัดเก็บข้อมูลจริง (Storage)"]
+        UPLOADS["โฟลเดอร์ uploads/<br/>• เก็บไฟล์รูปภาพ note_xxx.jpg"]
+        MYSQL[("ฐานข้อมูล MySQL (database.sql)<br/>• ตาราง categories<br/>• ตาราง notes<br/>• ตาราง todo_items")]
+    end
+
+    JS -- "① ยิงคำขอ (Fetch HTTP)" --> API
+    API -- "② สั่งสร้าง/ลบ/แก้ไขโน๊ต" --> NOTE
+    API -- "②.1 สั่งติ๊กถูกขีดฆ่า" --> TODO
+    NOTE -- "③ ขอยืม Connection (DI)" --> DB
+    TODO -- "③ ขอยืม Connection (DI)" --> DB
+    DB -- "④ ส่งคำสั่ง SQL เข้าไป" --> MYSQL
+    API -. "เซฟไฟล์รูป" .-> UPLOADS
+    MYSQL -- "⑤ ส่งผลลัพธ์ข้อมูลกลับ" --> DB --> NOTE --> API
+    API -- "⑥ ตอบกลับหน้าเว็บเป็น JSON" --> JS
+```
+
+### ⏱️ ลำดับเวลาการทำงาน 1-2-3-4-5-6 (Sequence Diagram)
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as 👤 ผู้ใช้
+    participant UI as 🖥️ หน้าเว็บ (index.html + app.js)
+    participant API as 🚪 ประตู API (api/notes.php)
+    participant Model as 🧠 Model (models/Note.php)
+    participant DB as 🔑 Database (models/Database.php)
+    participant MySQL as 🗄️ MySQL Database
+
+    User->>UI: 1. พิมพ์ข้อความแล้วกด "บันทึกโน๊ต"
+    UI->>API: 2. ยิง fetch('api/notes.php', POST)
+    Note over API: ตรวจสอบหัวข้อ & เซฟรูปภาพลง uploads/
+    API->>Model: 3. เรียกคำสั่ง $note->create($data)
+    Model->>DB: 4. ขอยืมการเชื่อมต่อ PDO
+    DB-->>Model: ส่ง Connection ให้
+    Model->>MySQL: 5. ส่งคำสั่ง INSERT INTO notes ... (Prepared Statement)
+    MySQL-->>Model: 6. บันทึกเสร็จ ส่ง ID กลับมา (เช่น ID = 5)
+    Model-->>API: 7. ส่ง ID คืนให้ Controller
+    API-->>UI: 8. ตอบกลับ JSON: { "success": true, "id": 5 }
+    UI->>User: 9. หน้าเว็บเด้งการ์ดใบใหม่ขึ้นมาทันที!
+```
+
+### สถานการณ์ตัวอย่าง: "เมื่อผู้ใช้กดบันทึกโน๊ตใหม่" (อธิบายปากเปล่า)
 1. **หน้าเว็บ (`index.html` + `app.js`):** รวบรวมข้อความ รูปภาพ และสีการ์ด แล้วยิงคำสั่ง `fetch('api/notes.php')` แบบ `POST`
 2. **ตัวรับเรื่อง (`api/notes.php`):** 
    * เช็คความถูกต้อง (Validation) เช่น ต้องมีหัวข้อ (`title`)
