@@ -32,6 +32,12 @@
         <input type="text" id="searchInput" placeholder="ค้นหาบันทึก หรือสิ่งที่ต้องทำ...">
       </div>
 
+      <!-- ปุ่มกระดิ่งทดสอบการแจ้งเตือน (Reminder Bell / Test) -->
+      <button class="btn-icon-nav" id="btnTestReminder" onclick="testNotification()" title="ทดสอบระบบแจ้งเตือน (Reminder)">
+        <i class="fa-solid fa-bell"></i>
+        <span class="bell-badge" id="bellBadge" style="display: none;">0</span>
+      </button>
+
       <!-- ปุ่มสร้างโน๊ต -->
       <button class="btn btn-create" onclick="openCreateModal()">
         <i class="fa-solid fa-plus"></i>
@@ -189,10 +195,12 @@
             <i class="fa-solid fa-check"></i> บันทึกโน๊ต
           </button>
         </div>
-
       </form>
     </div>
   </div>
+
+  <!-- กล่องแสดงข้อความแจ้งเตือน Toast Notification -->
+  <div id="toastContainer" class="toast-container"></div>
 
   <script src="assets/js/app.js"></script>
 </body>

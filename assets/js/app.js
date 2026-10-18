@@ -13,6 +13,7 @@ let allNotes = [];
 document.addEventListener('DOMContentLoaded', () => {
   fetchNotes();
   setupSearch();
+  checkAutoReminders();
 });
 
 // 1. ดึงโน๊ต (ถ้าไม่มี API จะใช้ Mock Data แสดงผลทันที)
@@ -343,4 +344,107 @@ function getMockData() {
       created_at: "2026-10-11"
     }
   ];
+}
+
+// =========================================
+// 8. ระบบแจ้งเตือน (Reminder & Toast System)
+// =========================================
+
+// ตรวจสอบโน๊ตที่มีการแจ้งเตือนใกล้ถึงเวลาจาก Backend อัตโนมัติเมื่อเปิดเว็บ
+async function checkAutoReminders() {
+  try {
+    const res = await fetch(`${API_URL}?reminders=1`);
+    const result = await res.json();
+    if (result.success && result.data && result.data.length > 0) {
+      const badge = document.getElementById('bellBadge');
+      if (badge) {
+        badge.textContent = result.data.length;
+        badge.style.display = 'flex';
+      }
+
+      // แสดง Toast แจ้งเตือนรายการแรกที่ใกล้ถึงกำหนด
+      const first = result.data[0];
+      showToastNotification(
+        `⏰ แจ้งเตือนงาน: ${escapeHtml(first.title)}`,
+        `มีกำหนดเวลา: ${first.reminder_at || 'เร็วๆ นี้'}`,
+        'warning'
+      );
+    }
+  } catch (err) {
+    // ป้องกัน error ขัดจังหวะหน้าเว็บ
+  }
+}
+
+// ฟังก์ชันเมื่อกดปุ่มกระดิ่งบน Navbar เพื่อทดสอบการแจ้งเตือน (ใช้สาธิตวันพรีเซนต์)
+async function testNotification() {
+  const badge = document.getElementById('bellBadge');
+
+  try {
+    const res = await fetch(`${API_URL}?reminders=1`);
+    const result = await res.json();
+
+    if (result.success && result.data && result.data.length > 0) {
+      if (badge) {
+        badge.textContent = result.data.length;
+        badge.style.display = 'flex';
+      }
+
+      result.data.forEach((item, index) => {
+        setTimeout(() => {
+          showToastNotification(
+            `⏰ กำหนดส่ง: ${escapeHtml(item.title)}`,
+            `หมวดหมู่: ${escapeHtml(item.category_name || 'งาน')} | กำหนด: ${item.reminder_at}`,
+            'warning'
+          );
+        }, index * 300);
+      });
+      return;
+    }
+  } catch (err) {}
+
+  // หากไม่มีข้อมูลแจ้งเตือนใน DB หรือทดสอบแบบออฟไลน์ ให้แสดง Demo Toast ทันที
+  if (badge) {
+    badge.textContent = '1';
+    badge.style.display = 'flex';
+  }
+  showToastNotification(
+    '🔔 ทดสอบระบบแจ้งเตือน (Demo)',
+    'ตรวจพบงานใกล้ถึงกำหนด: "เตรียมสไลด์นำเสนอ OOP" ในอีก 30 นาที!',
+    'warning'
+  );
+}
+
+// สร้างการ์ด Toast แจ้งเตือนเด้งขึ้นมุมขวาบนอย่างสวยงาม
+function showToastNotification(title, message, type = 'warning') {
+  let container = document.getElementById('toastContainer');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toastContainer';
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+  }
+
+  const toast = document.createElement('div');
+  toast.className = `toast-card ${type === 'success' ? 'success' : ''}`;
+
+  const iconClass = type === 'success' ? 'fa-solid fa-circle-check' : 'fa-solid fa-bell';
+
+  toast.innerHTML = `
+    <div class="toast-icon">
+      <i class="${iconClass}"></i>
+    </div>
+    <div class="toast-body">
+      <div class="toast-title">${title}</div>
+      <div class="toast-text">${message}</div>
+    </div>
+    <button class="toast-close" onclick="this.parentElement.remove()" title="ปิด">&times;</button>
+  `;
+
+  container.appendChild(toast);
+
+  // หายไปเองหลัง 4.5 วินาที
+  setTimeout(() => {
+    toast.style.animation = 'fadeOutRight 0.35s ease forwards';
+    setTimeout(() => toast.remove(), 350);
+  }, 4500);
 }
