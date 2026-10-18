@@ -14,11 +14,6 @@ document.addEventListener('DOMContentLoaded', () => {
   fetchNotes();
   setupSearch();
   checkAutoReminders();
-
-  const btnTest = document.getElementById('btnTestReminder');
-  if (btnTest) {
-    btnTest.addEventListener('click', testNotification);
-  }
 });
 
 // 1. ดึงโน๊ต (ถ้าไม่มี API จะใช้ Mock Data แสดงผลทันที)
@@ -380,7 +375,12 @@ async function checkAutoReminders() {
 }
 
 // ฟังก์ชันเมื่อกดปุ่มกระดิ่งบน Navbar เพื่อทดสอบการแจ้งเตือน (ใช้สาธิตวันพรีเซนต์)
+let isTestingReminder = false;
 async function testNotification() {
+  if (isTestingReminder) return; // ป้องกันการยิงซ้ำถ้ากดย้ำๆ
+  isTestingReminder = true;
+  setTimeout(() => { isTestingReminder = false; }, 1000);
+
   const badge = document.getElementById('bellBadge');
 
   try {
