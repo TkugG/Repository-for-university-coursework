@@ -369,11 +369,10 @@ async function checkAutoReminders() {
 
       // แสดง Toast แจ้งเตือนรายการแรกที่ใกล้ถึงกำหนด
       const first = result.data[0];
-      showToastNotification(
-        `⏰ แจ้งเตือนงาน: ${escapeHtml(first.title)}`,
-        `มีกำหนดเวลา: ${first.reminder_at || 'เร็วๆ นี้'}`,
-        'warning'
-      );
+      const title = `⏰ แจ้งเตือนงาน: ${first.title}`;
+      const msg = `มีกำหนดเวลา: ${first.reminder_at || 'เร็วๆ นี้'}`;
+      showToastNotification(title, msg, 'warning');
+      sendDesktopNotification(title, msg);
     }
   } catch (err) {
     // ป้องกัน error ขัดจังหวะหน้าเว็บ
@@ -396,27 +395,40 @@ async function testNotification() {
 
       result.data.forEach((item, index) => {
         setTimeout(() => {
-          showToastNotification(
-            `⏰ กำหนดส่ง: ${escapeHtml(item.title)}`,
-            `หมวดหมู่: ${escapeHtml(item.category_name || 'งาน')} | กำหนด: ${item.reminder_at}`,
-            'warning'
-          );
+          const title = `⏰ กำหนดส่ง: ${item.title}`;
+          const msg = `หมวดหมู่: ${item.category_name || 'งาน'} | กำหนด: ${item.reminder_at}`;
+          showToastNotification(title, msg, 'warning');
+          sendDesktopNotification(title, msg);
         }, index * 300);
       });
       return;
     }
   } catch (err) {}
 
-  // หากไม่มีข้อมูลแจ้งเตือนใน DB หรือทดสอบแบบออฟไลน์ ให้แสดง Demo Toast ทันที
+  // หากไม่มีข้อมูลแจ้งเตือนใน DB หรือทดสอบแบบออฟไลน์ ให้แสดง Demo ทันที
   if (badge) {
     badge.textContent = '1';
     badge.style.display = 'flex';
   }
-  showToastNotification(
-    '🔔 ทดสอบระบบแจ้งเตือน (Demo)',
-    'ตรวจพบงานใกล้ถึงกำหนด: "เตรียมสไลด์นำเสนอ OOP" ในอีก 30 นาที!',
-    'warning'
-  );
+  const demoTitle = '🔔 NoteCraft แจ้งเตือนงาน';
+  const demoMsg = 'ตรวจพบกำหนดส่ง: "เตรียมสไลด์นำเสนอ OOP" ในอีก 30 นาที!';
+  showToastNotification(demoTitle, demoMsg, 'warning');
+  sendDesktopNotification(demoTitle, demoMsg);
+}
+
+// ยิงการแจ้งเตือนระดับ OS (Windows Desktop Notification) เข้าแถบข้างเครื่อง
+function sendDesktopNotification(title, message) {
+  if (!("Notification" in window)) return;
+
+  if (Notification.permission === "granted") {
+    new Notification(title, { body: message });
+  } else if (Notification.permission !== "denied") {
+    Notification.requestPermission().then(permission => {
+      if (permission === "granted") {
+        new Notification(title, { body: message });
+      }
+    });
+  }
 }
 
 // สร้างการ์ด Toast แจ้งเตือนเด้งขึ้นมุมขวาบนอย่างสวยงาม
@@ -458,3 +470,4 @@ function showToastNotification(title, message, type = 'warning') {
 window.testNotification = testNotification;
 window.showToastNotification = showToastNotification;
 window.checkAutoReminders = checkAutoReminders;
+window.sendDesktopNotification = sendDesktopNotification;
