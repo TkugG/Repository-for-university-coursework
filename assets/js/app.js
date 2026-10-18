@@ -14,6 +14,11 @@ document.addEventListener('DOMContentLoaded', () => {
   fetchNotes();
   setupSearch();
   checkAutoReminders();
+
+  const btnTest = document.getElementById('btnTestReminder');
+  if (btnTest) {
+    btnTest.addEventListener('click', testNotification);
+  }
 });
 
 // 1. ดึงโน๊ต (ถ้าไม่มี API จะใช้ Mock Data แสดงผลทันที)
@@ -448,3 +453,8 @@ function showToastNotification(title, message, type = 'warning') {
     setTimeout(() => toast.remove(), 350);
   }, 4500);
 }
+
+// ผูกฟังก์ชันเข้ากับ Window Object เพื่อให้เรียกใช้ได้แน่นอนทั้งจาก inline HTML และ Event Listener
+window.testNotification = testNotification;
+window.showToastNotification = showToastNotification;
+window.checkAutoReminders = checkAutoReminders;
